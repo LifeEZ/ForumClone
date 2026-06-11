@@ -13,7 +13,7 @@ Portfolio-ready community platform. Domain language: [`CONTEXT.md`](../CONTEXT.m
 |------|----------|
 | Name | **Hiver** — community discussion platform |
 | URLs | `/` home · `/c/{name}` community · `/c/{name}/posts/{id}` post |
-| UI | Reddit-inspired 3-column layout, shadcn/ui, **dark mode default**, Hiver brand colors |
+| UI | Reddit-inspired 3-column layout, shadcn/ui, **dark mode default**, dark green\forest colors |
 | Audience | Portfolio demo — explicit naming (`/c/` = community), not competing with Reddit |
 
 ## v1 journeys (must work)

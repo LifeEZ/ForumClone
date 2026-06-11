@@ -1,55 +1,41 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Home, Compass, TrendingUp, Plus, Trees } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
-export const LeftSidebar: React.FC = () => {
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Home, Plus, Trees } from 'lucide-react';
+import { useAppContext } from '@/context/AppContext';
+import { RemoteImage } from '@/components/RemoteImage';
+
+export function LeftSidebar() {
   const { communities } = useAppContext();
-  const location = useLocation();
+  const pathname = usePathname() ?? '';
   const joinedCommunities = communities.filter((c) => c.isJoined);
-  const navItems = [
-  {
-    icon: Home,
-    label: 'Home',
-    path: '/'
-  },
-  {
-    icon: TrendingUp,
-    label: 'Popular',
-    path: '/popular'
-  },
-  {
-    icon: Compass,
-    label: 'Explore',
-    path: '/explore'
-  }];
+  const firstJoined = joinedCommunities[0];
 
   return (
     <aside className="w-64 flex-shrink-0 hidden lg:flex flex-col h-screen sticky top-0 border-r border-forest-border bg-forest-bg overflow-y-auto py-6 px-4">
       <Link
-        to="/"
-        className="flex items-center gap-3 px-2 mb-8 text-forest-accent hover:text-forest-accent-hover transition-colors">
-        
+        href="/"
+        className="flex items-center gap-3 px-2 mb-8 text-forest-accent hover:text-forest-accent-hover transition-colors"
+      >
         <Trees className="w-8 h-8" />
         <span className="text-xl font-bold tracking-tight text-forest-text">
-          Canopy
+          Hiver
         </span>
       </Link>
 
       <nav className="space-y-1 mb-8">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${isActive ? 'bg-forest-surface text-forest-text' : 'text-forest-muted hover:bg-forest-surface hover:text-forest-text'}`}>
-              
-              <Icon className="w-5 h-5" />
-              {item.label}
-            </Link>);
-
-        })}
+        <Link
+          href="/"
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+            pathname === '/'
+              ? 'bg-forest-surface text-forest-text'
+              : 'text-forest-muted hover:bg-forest-surface hover:text-forest-text'
+          }`}
+        >
+          <Home className="w-5 h-5" />
+          Home
+        </Link>
       </nav>
 
       <div className="mb-6">
@@ -57,32 +43,47 @@ export const LeftSidebar: React.FC = () => {
           Your Communities
         </h3>
         <div className="space-y-1">
-          {joinedCommunities.map((community) =>
-          <Link
-            key={community.id}
-            to={`/r/${community.handle}`}
-            className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${location.pathname === `/r/${community.handle}` ? 'bg-forest-surface text-forest-text' : 'text-forest-muted hover:bg-forest-surface hover:text-forest-text'}`}>
-            
-              <img
-              src={community.avatarUrl}
-              alt=""
-              className="w-6 h-6 rounded-full object-cover" />
-            
-              <span className="truncate">{community.name}</span>
+          {joinedCommunities.map((community) => (
+            <Link
+              key={community.id}
+              href={`/c/${community.name}`}
+              className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                pathname === `/c/${community.name}`
+                  ? 'bg-forest-surface text-forest-text'
+                  : 'text-forest-muted hover:bg-forest-surface hover:text-forest-text'
+              }`}
+            >
+              <RemoteImage
+                src={community.avatarUrl}
+                alt=""
+                width={24}
+                height={24}
+                className="w-6 h-6 rounded-full object-cover"
+              />
+              <span className="truncate">{community.displayName}</span>
             </Link>
-          )}
+          ))}
         </div>
       </div>
 
       <div className="mt-auto pt-4">
-        <Link
-          to="/compose"
-          className="flex items-center justify-center gap-2 w-full bg-forest-accent hover:bg-forest-accent-hover text-white py-3 px-4 rounded-xl font-semibold transition-colors">
-          
-          <Plus className="w-5 h-5" />
-          Create Post
-        </Link>
+        {firstJoined ? (
+          <Link
+            href={`/c/${firstJoined.name}/submit`}
+            className="flex items-center justify-center gap-2 w-full bg-forest-accent hover:bg-forest-accent-hover text-white py-3 px-4 rounded-xl font-semibold transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Create Post
+          </Link>
+        ) : (
+          <Link
+            href="/"
+            className="flex items-center justify-center gap-2 w-full bg-forest-surface border border-forest-border text-forest-muted py-3 px-4 rounded-xl font-semibold transition-colors"
+          >
+            Join a community to post
+          </Link>
+        )}
       </div>
-    </aside>);
-
-};
+    </aside>
+  );
+}

@@ -7,7 +7,7 @@ Monorepo for **Hiver** — a community discussion platform (portfolio demo).
 ## Structure
 
 - `backend/` — FastAPI API (`src/app/`), tests, migrations, Alembic
-- `frontend/` — Next.js UI
+- `frontend/` — Next.js App Router UI
 - `docker-compose.yml` — Postgres for local development
 
 ## Backend
@@ -25,6 +25,6 @@ uv run uvicorn app.main:app --reload
 
 ```bash
 cd frontend
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```

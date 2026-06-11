@@ -2,12 +2,14 @@ export interface User {
   id: string;
   username: string;
   avatarUrl: string;
+  karma?: number;
 }
 
 export interface Community {
   id: string;
+  /** URL slug — maps to backend `name` (e.g. films → /c/films) */
   name: string;
-  handle: string;
+  displayName: string;
   description: string;
   memberCount: number;
   isJoined: boolean;

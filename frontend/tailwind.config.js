@@ -1,9 +1,6 @@
-
-export default {
-  content: [
-  './index.html',
-  './src/**/*.{js,ts,jsx,tsx}'
-],
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
       colors: {
@@ -20,12 +17,12 @@ export default {
         vote: {
           up: '#d97736',
           down: '#5c7e9e',
-        }
+        },
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-      }
+      },
     },
   },
   plugins: [],
-}
+};
