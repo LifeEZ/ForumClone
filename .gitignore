@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[oc]
+*.egg-info/
+build/
+dist/
+wheels/
+
+# Virtual environments
+.venv/
+
+# Python tooling
+.ruff_cache/
+.mypy_cache/
+.pytype/
+
+# uv
+.uv/
+
+# Environment
+**/.env
+**/.env.*
+!**/.env.example
+
+# Testing
+**/test.db
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# User uploads (keep directory, ignore files)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Frontend (Next.js / pnpm)
+node_modules/
+frontend/.next/
+frontend/out/
+frontend/.vercel/
+*.tsbuildinfo
+next-env.d.ts
+.pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker (local override files only; compose file is committed)
+docker-compose.override.yml
+docker-compose.*.local.yml
+
+# IDE / editor
+.idea/
+.vscode/
+.cursor/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local tooling
+.codegraph/
+AGENTS.md
+docs/agents/
+
+# Personal learning (not project docs)
+learning/
