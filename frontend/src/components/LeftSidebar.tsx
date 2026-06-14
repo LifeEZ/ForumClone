@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Plus, Trees } from 'lucide-react';
+import { Home, Plus } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { RemoteImage } from '@/components/RemoteImage';
 
@@ -13,17 +13,7 @@ export function LeftSidebar() {
   const firstJoined = joinedCommunities[0];
 
   return (
-    <aside className="w-64 flex-shrink-0 hidden lg:flex flex-col h-screen sticky top-0 border-r border-forest-border bg-forest-bg overflow-y-auto py-6 px-4">
-      <Link
-        href="/"
-        className="flex items-center gap-3 px-2 mb-8 text-forest-accent hover:text-forest-accent-hover transition-colors"
-      >
-        <Trees className="w-8 h-8" />
-        <span className="text-xl font-bold tracking-tight text-forest-text">
-          Hiver
-        </span>
-      </Link>
-
+    <aside className="w-64 flex-shrink-0 hidden lg:flex flex-col sticky top-14 h-[calc(100vh-3.5rem)] border-r border-forest-border bg-forest-bg overflow-y-auto py-6 px-4">
       <nav className="space-y-1 mb-8">
         <Link
           href="/"

@@ -1,10 +1,5 @@
-import { PlaceholderView } from '@/views/PlaceholderView';
+import { AuthFormView } from '@/views/AuthFormView';
 
 export default function RegisterPage() {
-  return (
-    <PlaceholderView
-      title="Sign up"
-      description="Coming in build slice 1 — register with username, email, and password."
-    />
-  );
+  return <AuthFormView mode="register" />;
 }

@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+import app.models
+
 from app.config import settings
 from app.database import engine
 
@@ -17,7 +19,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="Reddit Clone API",
+        title="Hiver API",
         version="1.0.0",
         debug=settings.debug,
         lifespan=lifespan,

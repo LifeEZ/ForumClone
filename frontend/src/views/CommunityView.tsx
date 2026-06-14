@@ -58,7 +58,9 @@ export function CommunityView({ name }: { name: string }) {
               <h1 className="text-2xl sm:text-3xl font-bold text-forest-text">
                 {community.displayName}
               </h1>
-              <p className="text-forest-muted font-medium">c/{community.name}</p>
+              <p className="text-forest-muted font-medium">
+                c/{community.name}
+              </p>
             </div>
 
             <button

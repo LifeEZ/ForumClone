@@ -8,13 +8,7 @@ import { PostCard } from '@/components/PostCard';
 import { CommentThread } from '@/components/CommentThread';
 import { getCommunityByName } from '@/data/mockData';
 
-export function PostDetailView({
-  name,
-  id,
-}: {
-  name: string;
-  id: string;
-}) {
+export function PostDetailView({ name, id }: { name: string; id: string }) {
   const router = useRouter();
   const { posts, communities, comments, addComment } = useAppContext();
   const [newComment, setNewComment] = useState('');

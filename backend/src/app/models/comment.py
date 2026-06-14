@@ -4,7 +4,7 @@ from uuid import uuid4
 from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database import Base
+from app.database import Base, utc_now
 
 
 class Comment(Base):
@@ -17,7 +17,7 @@ class Comment(Base):
     parent_id: Mapped[str | None] = mapped_column(ForeignKey("comments.id"), default=None)
     depth: Mapped[int] = mapped_column(Integer, default=0)
     score: Mapped[int] = mapped_column(Integer, default=0)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(default=utc_now)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
 
     post: Mapped["Post"] = relationship(back_populates="comments")

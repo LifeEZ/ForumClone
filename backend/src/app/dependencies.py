@@ -1,10 +1,12 @@
 from collections.abc import AsyncGenerator
+from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import async_session_factory
+from app.models.user import User
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -14,10 +16,14 @@ async def get_session() -> AsyncGenerator[AsyncSession]:
         yield session
 
 
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
+BearerCredentials = Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)]
+
+
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),  # noqa: B008
-    session: AsyncSession = Depends(get_session),  # noqa: B008
-) -> "User":  # type: ignore[name-defined]  # noqa: F821
+    credentials: BearerCredentials,
+    session: SessionDep,
+) -> User:
     """Decode the access JWT and return the authenticated User row."""
     from app.services.auth import TokenInvalidError, get_user_from_token
 
@@ -38,10 +44,13 @@ async def get_current_user(
     return user
 
 
+CurrentUserDep = Annotated[User, Depends(get_current_user)]
+
+
 async def get_current_user_optional(
-    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),  # noqa: B008
-    session: AsyncSession = Depends(get_session),  # noqa: B008
-) -> "User | None":  # type: ignore[name-defined]  # noqa: F821
+    credentials: BearerCredentials,
+    session: SessionDep,
+) -> User | None:
     """Like get_current_user but returns None for unauthenticated requests."""
     if credentials is None:
         return None
@@ -49,3 +58,6 @@ async def get_current_user_optional(
         return await get_current_user(credentials=credentials, session=session)
     except HTTPException:
         return None
+
+
+CurrentUserOptionalDep = Annotated[User | None, Depends(get_current_user_optional)]

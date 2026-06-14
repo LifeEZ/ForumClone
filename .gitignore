@@ -28,6 +28,7 @@ wheels/
 .coverage
 htmlcov/
 coverage.xml
+*.log
 
 # User uploads (keep directory, ignore files)
 backend/uploads/*

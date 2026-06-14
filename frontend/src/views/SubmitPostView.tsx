@@ -58,10 +58,10 @@ export function SubmitPostView({ name }: { name: string }) {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-forest-text mb-2">Create a post</h1>
-      <p className="text-forest-muted mb-6">
-        Posting to c/{community.name}
-      </p>
+      <h1 className="text-2xl font-bold text-forest-text mb-2">
+        Create a post
+      </h1>
+      <p className="text-forest-muted mb-6">Posting to c/{community.name}</p>
 
       <form
         onSubmit={handleSubmit}

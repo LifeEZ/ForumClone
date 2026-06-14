@@ -1,10 +1,5 @@
-import { PlaceholderView } from '@/views/PlaceholderView';
+import { AuthFormView } from '@/views/AuthFormView';
 
 export default function LoginPage() {
-  return (
-    <PlaceholderView
-      title="Log in"
-      description="Coming in build slice 1 — email and password login with JWT."
-    />
-  );
+  return <AuthFormView mode="login" />;
 }

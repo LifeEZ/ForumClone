@@ -15,18 +15,12 @@ interface PostCardProps {
   isDetail?: boolean;
 }
 
-export function PostCard({
-  post,
-  community,
-  isDetail = false,
-}: PostCardProps) {
+export function PostCard({ post, community, isDetail = false }: PostCardProps) {
   const router = useRouter();
   const { votePost } = useAppContext();
 
   const postHref =
-    community != null
-      ? `/c/${community.name}/posts/${post.id}`
-      : `/`;
+    community != null ? `/c/${community.name}/posts/${post.id}` : `/`;
 
   const handleCardClick = (e: React.MouseEvent) => {
     if (
@@ -73,7 +67,10 @@ export function PostCard({
         <span className="text-forest-muted">
           {post.author.username}
           {post.author.karma != null && (
-            <span className="text-forest-muted/80"> · {post.author.karma} karma</span>
+            <span className="text-forest-muted/80">
+              {' '}
+              · {post.author.karma} karma
+            </span>
           )}
         </span>
         <span className="text-forest-muted">•</span>

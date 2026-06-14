@@ -14,10 +14,12 @@ export function RightSidebar({ communityId }: RightSidebarProps) {
   const community = communityId
     ? communities.find((c) => c.id === communityId)
     : null;
-  const trendingCommunities = communities.filter((c) => !c.isJoined).slice(0, 3);
+  const trendingCommunities = communities
+    .filter((c) => !c.isJoined)
+    .slice(0, 3);
 
   return (
-    <aside className="w-80 flex-shrink-0 hidden xl:block h-screen sticky top-0 py-6 px-4 overflow-y-auto">
+    <aside className="w-80 flex-shrink-0 hidden xl:block sticky top-14 h-[calc(100vh-3.5rem)] py-6 px-4 overflow-y-auto">
       {community ? (
         <div className="bg-forest-surface border border-forest-border rounded-2xl p-5 mb-6">
           <h3 className="text-sm font-semibold text-forest-muted uppercase tracking-wider mb-4">

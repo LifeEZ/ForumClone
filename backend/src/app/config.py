@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     test_database_url: str = (
         "postgresql+asyncpg://postgres:postgres@localhost:5433/redditclone_test"
     )
-    secret_key: str = "change-me"
+    secret_key: str = "dev-only-secret-key-must-be-32-chars-min"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
     debug: bool = False
@@ -21,4 +21,4 @@ class Settings(BaseSettings):
     upload_dir: str = "uploads"
 
 
-settings = Settings()  # type: ignore[call-arg]
+settings = Settings()

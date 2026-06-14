@@ -1,7 +1,8 @@
 export interface User {
   id: string;
   username: string;
-  avatarUrl: string;
+  /** null until user uploads a custom avatar (later slice). */
+  avatarUrl: string | null;
   karma?: number;
 }
 

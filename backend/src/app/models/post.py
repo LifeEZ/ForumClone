@@ -4,7 +4,7 @@ from uuid import uuid4
 from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database import Base
+from app.database import Base, utc_now
 
 
 class Post(Base):
@@ -20,7 +20,7 @@ class Post(Base):
     author_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
     score: Mapped[int] = mapped_column(Integer, default=0)
     comment_count: Mapped[int] = mapped_column(Integer, default=0)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(default=utc_now)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     is_locked: Mapped[bool] = mapped_column(Boolean, default=False)
 

@@ -1,24 +1,25 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { Post, Community, Comment, User } from '@/types';
-import {
-  mockPosts,
-  mockCommunities,
-  mockComments,
-  currentUser,
-} from '@/data/mockData';
+import { useAuth } from '@/context/AuthContext';
+import { ApiUser } from '@/lib/api';
+import { mockPosts, mockCommunities, mockComments } from '@/data/mockData';
+
+function mapAuthUser(apiUser: ApiUser): User {
+  return {
+    id: apiUser.id,
+    username: apiUser.username,
+    avatarUrl: apiUser.avatar_url,
+    karma: apiUser.karma,
+  };
+}
 
 interface AppContextType {
   posts: Post[];
   communities: Community[];
   comments: Record<string, Comment[]>;
-  user: User;
+  user: User | null;
   toggleJoinCommunity: (communityId: string) => void;
   votePost: (postId: string, vote: 1 | -1 | 0) => void;
   voteComment: (postId: string, commentId: string, vote: 1 | -1 | 0) => void;
@@ -44,6 +45,9 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const { user: authUser } = useAuth();
+  const user = authUser ? mapAuthUser(authUser) : null;
+
   const [posts, setPosts] = useState<Post[]>(mockPosts);
   const [communities, setCommunities] = useState<Community[]>(mockCommunities);
   const [comments, setComments] =
@@ -56,9 +60,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ? {
               ...c,
               isJoined: !c.isJoined,
-              memberCount: c.isJoined
-                ? c.memberCount - 1
-                : c.memberCount + 1,
+              memberCount: c.isJoined ? c.memberCount - 1 : c.memberCount + 1,
             }
           : c,
       ),
@@ -115,11 +117,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const voteComment = (
-    postId: string,
-    commentId: string,
-    vote: 1 | -1 | 0,
-  ) => {
+  const voteComment = (postId: string, commentId: string, vote: 1 | -1 | 0) => {
     setComments((prev) => ({
       ...prev,
       [postId]: voteCommentRecursive(prev[postId] || [], commentId, vote),
@@ -138,10 +136,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       | 'author'
     >,
   ) => {
+    if (!user) return '';
     const newPost: Post = {
       ...postData,
       id: `p_${Date.now()}`,
-      author: currentUser,
+      author: user,
       createdAt: new Date().toISOString(),
       upvotes: 1,
       downvotes: 0,
@@ -179,11 +178,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     parentId: string | null,
     content: string,
   ) => {
+    if (!user) return;
     const newComment: Comment = {
       id: `cm_${Date.now()}`,
       postId,
       parentId,
-      author: currentUser,
+      author: user,
       createdAt: new Date().toISOString(),
       content,
       upvotes: 1,
@@ -216,7 +216,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         posts,
         communities,
         comments,
-        user: currentUser,
+        user,
         toggleJoinCommunity,
         votePost,
         voteComment,

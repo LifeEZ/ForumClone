@@ -3,7 +3,7 @@ import { Community, Post, Comment, User } from '@/types';
 export const currentUser: User = {
   id: 'u1',
   username: 'forest_dweller',
-  avatarUrl: 'https://i.pravatar.cc/150?u=forest_dweller',
+  avatarUrl: null,
   karma: 42,
 };
 
@@ -53,7 +53,7 @@ export const mockPosts: Post[] = [
     author: {
       id: 'u2',
       username: 'cinema_fan',
-      avatarUrl: 'https://i.pravatar.cc/150?u=cinema_fan',
+      avatarUrl: null,
       karma: 128,
     },
     createdAt: '2026-06-11T18:00:00.000Z',
@@ -71,7 +71,7 @@ export const mockPosts: Post[] = [
     author: {
       id: 'u3',
       username: 'vinyl_head',
-      avatarUrl: 'https://i.pravatar.cc/150?u=vinyl_head',
+      avatarUrl: null,
       karma: 890,
     },
     createdAt: '2026-06-11T20:30:00.000Z',
@@ -89,7 +89,7 @@ export const mockPosts: Post[] = [
     author: {
       id: 'u4',
       username: 'css_wizard',
-      avatarUrl: 'https://i.pravatar.cc/150?u=css_wizard',
+      avatarUrl: null,
       karma: 456,
     },
     createdAt: '2026-06-10T20:00:00.000Z',
@@ -112,7 +112,7 @@ export const mockComments: Record<string, Comment[]> = {
       author: {
         id: 'u5',
         username: 'contrast_checker',
-        avatarUrl: 'https://i.pravatar.cc/150?u=contrast_checker',
+        avatarUrl: null,
         karma: 56,
       },
       createdAt: '2026-06-11T19:10:00.000Z',
@@ -129,7 +129,7 @@ export const mockComments: Record<string, Comment[]> = {
           author: {
             id: 'u2',
             username: 'cinema_fan',
-            avatarUrl: 'https://i.pravatar.cc/150?u=cinema_fan',
+            avatarUrl: null,
             karma: 128,
           },
           createdAt: '2026-06-11T19:15:00.000Z',
@@ -148,7 +148,7 @@ export const mockComments: Record<string, Comment[]> = {
       author: {
         id: 'u6',
         username: 'oled_fan',
-        avatarUrl: 'https://i.pravatar.cc/150?u=oled_fan',
+        avatarUrl: null,
         karma: 12,
       },
       createdAt: '2026-06-11T19:20:00.000Z',

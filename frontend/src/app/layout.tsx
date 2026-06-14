@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { AppProvider } from '@/context/AppContext';
+import { AuthProvider } from '@/context/AuthContext';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -13,9 +14,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
-        <AppProvider>{children}</AppProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning>
+        <AuthProvider>
+          <AppProvider>{children}</AppProvider>
+        </AuthProvider>
       </body>
     </html>
   );

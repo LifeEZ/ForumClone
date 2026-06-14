@@ -1,8 +1,23 @@
+import os
+
+os.environ.setdefault(
+    "SECRET_KEY",
+    "test-secret-key-must-be-at-least-32-characters-long",
+)
+
+from collections.abc import AsyncGenerator
+
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+import app.models.comment
+import app.models.community
+import app.models.membership
+import app.models.post
+import app.models.refresh_token
+import app.models.user
 from app.database import Base
 from app.dependencies import get_session
 from app.main import create_app
@@ -21,14 +36,14 @@ def anyio_backend() -> str:
 
 
 @pytest_asyncio.fixture
-async def session() -> AsyncSession:
+async def session() -> AsyncGenerator[AsyncSession, None]:
     engine = create_async_engine(TEST_DB_URL, echo=False)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
     factory = async_sessionmaker(engine, expire_on_commit=False)
     async with factory() as sess:
-        yield sess  # type: ignore[misc]
+        yield sess
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -36,12 +51,16 @@ async def session() -> AsyncSession:
 
 
 @pytest_asyncio.fixture
-async def client(session: AsyncSession) -> AsyncClient:
+async def client(session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     app = create_app()
-    app.dependency_overrides[get_session] = lambda: session
+
+    async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
+        yield session
+
+    app.dependency_overrides[get_session] = override_get_session
 
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
     ) as ac:
-        yield ac  # type: ignore[misc]
+        yield ac

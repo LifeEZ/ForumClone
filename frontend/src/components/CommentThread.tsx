@@ -5,7 +5,7 @@ import { MessageSquare, MinusSquare, PlusSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Comment } from '@/types';
 import { VoteControl } from '@/components/VoteControl';
-import { RemoteImage } from '@/components/RemoteImage';
+import { UserAvatar } from '@/components/UserAvatar';
 import { RelativeTime } from '@/components/RelativeTime';
 import { useAppContext } from '@/context/AppContext';
 
@@ -51,16 +51,18 @@ export function CommentThread({
         className="flex gap-2 sm:gap-3"
         style={{
           marginLeft:
-            depth > 0 ? `${Math.min(depth, MAX_VISUAL_DEPTH) * 12}px` : undefined,
+            depth > 0
+              ? `${Math.min(depth, MAX_VISUAL_DEPTH) * 12}px`
+              : undefined,
         }}
       >
         <div className="flex flex-col items-center">
-          <RemoteImage
-            src={comment.author.avatarUrl}
-            alt=""
-            width={32}
-            height={32}
-            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
+          <UserAvatar
+            userId={comment.author.id}
+            username={comment.author.username}
+            avatarUrl={comment.author.avatarUrl}
+            className="w-6 h-6 sm:w-8 sm:h-8"
+            size={32}
           />
           {isCollapsed ? (
             <button
