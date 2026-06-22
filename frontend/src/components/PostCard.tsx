@@ -13,11 +13,19 @@ interface PostCardProps {
   post: Post;
   community?: Community;
   isDetail?: boolean;
+  onVote?: (vote: 1 | -1 | 0) => void;
 }
 
-export function PostCard({ post, community, isDetail = false }: PostCardProps) {
+export function PostCard({
+  post,
+  community,
+  isDetail = false,
+  onVote,
+}: PostCardProps) {
   const router = useRouter();
   const { votePost } = useAppContext();
+
+  const handleVote = onVote ?? ((vote) => votePost(post.id, vote));
 
   const postHref =
     community != null ? `/c/${community.name}/posts/${post.id}` : `/`;
@@ -114,7 +122,7 @@ export function PostCard({ post, community, isDetail = false }: PostCardProps) {
           upvotes={post.upvotes}
           downvotes={post.downvotes}
           userVote={post.userVote}
-          onVote={(vote) => votePost(post.id, vote)}
+          onVote={handleVote}
           horizontal
         />
 

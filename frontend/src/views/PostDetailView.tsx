@@ -1,23 +1,74 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { PostCard } from '@/components/PostCard';
 import { CommentThread } from '@/components/CommentThread';
-import { getCommunityByName } from '@/data/mockData';
+import { ApiError, fetchPost } from '@/lib/api';
+import {
+  getCommunityByName,
+  mapApiPost,
+  updatePostVote,
+} from '@/lib/mappers';
+import { Post } from '@/types';
 
 export function PostDetailView({ name, id }: { name: string; id: string }) {
   const router = useRouter();
-  const { posts, communities, comments, addComment } = useAppContext();
-  const [newComment, setNewComment] = useState('');
+  const { communities, comments, user } = useAppContext();
 
-  const post = posts.find((p) => p.id === id);
+  const [post, setPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const community = getCommunityByName(communities, name);
   const postComments = comments[id] || [];
 
-  if (!post || !community || post.communityId !== community.id) {
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPost() {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchPost(id);
+        if (cancelled) return;
+        setPost(mapApiPost(data));
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof ApiError && err.status === 404) {
+          setError('not_found');
+        } else {
+          setError(
+            err instanceof ApiError ? err.message : 'Could not load post',
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void loadPost();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const handleVote = (vote: 1 | -1 | 0) => {
+    setPost((prev) => {
+      if (!prev) return prev;
+      return updatePostVote([prev], prev.id, vote)[0];
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center py-20 text-forest-muted">Loading post…</div>
+    );
+  }
+
+  if (error === 'not_found' || !post || !community || post.communityId !== community.id) {
     return (
       <div className="text-center py-20">
         <h2 className="text-2xl font-bold text-forest-text">Post not found</h2>
@@ -25,12 +76,16 @@ export function PostDetailView({ name, id }: { name: string; id: string }) {
     );
   }
 
-  const handleCommentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim()) return;
-    addComment(post.id, null, newComment);
-    setNewComment('');
-  };
+  if (error) {
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-2xl font-bold text-forest-text mb-2">
+          Could not load post
+        </h2>
+        <p className="text-forest-muted">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full pb-20">
@@ -44,31 +99,24 @@ export function PostDetailView({ name, id }: { name: string; id: string }) {
       </button>
 
       <div className="mb-8">
-        <PostCard post={post} community={community} isDetail />
+        <PostCard
+          post={post}
+          community={community}
+          isDetail
+          onVote={handleVote}
+        />
       </div>
 
       <div className="bg-forest-surface border border-forest-border rounded-2xl p-4 sm:p-6">
         <h3 className="text-lg font-bold text-forest-text mb-6">
-          Comments ({post.commentCount})
+          Comments ({postComments.length > 0 ? postComments.length : post.commentCount})
         </h3>
 
-        <form onSubmit={handleCommentSubmit} className="mb-8">
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Add a comment..."
-            className="w-full bg-forest-bg border border-forest-border rounded-xl p-4 text-forest-text placeholder:text-forest-muted focus:outline-none focus:border-forest-accent focus:ring-1 focus:ring-forest-accent resize-none min-h-[100px]"
-          />
-          <div className="flex justify-end mt-2">
-            <button
-              type="submit"
-              disabled={!newComment.trim()}
-              className="px-6 py-2 rounded-xl font-semibold bg-forest-accent text-white hover:bg-forest-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Comment
-            </button>
-          </div>
-        </form>
+        <div className="mb-8 rounded-xl border border-forest-border bg-forest-bg/50 p-4 text-sm text-forest-muted">
+          {!user
+            ? 'Log in to comment'
+            : 'Commenting is disabled for now'}
+        </div>
 
         {postComments.length === 0 ? (
           <div className="text-center py-10 text-forest-muted">

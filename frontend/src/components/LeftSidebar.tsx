@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Plus } from 'lucide-react';
+import { Home } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { RemoteImage } from '@/components/RemoteImage';
 
@@ -10,7 +10,6 @@ export function LeftSidebar() {
   const { communities } = useAppContext();
   const pathname = usePathname() ?? '';
   const joinedCommunities = communities.filter((c) => c.isJoined);
-  const firstJoined = joinedCommunities[0];
 
   return (
     <aside className="w-64 flex-shrink-0 hidden lg:flex flex-col sticky top-14 h-[calc(100vh-3.5rem)] border-r border-forest-border bg-forest-bg overflow-y-auto py-6 px-4">
@@ -54,25 +53,6 @@ export function LeftSidebar() {
             </Link>
           ))}
         </div>
-      </div>
-
-      <div className="mt-auto pt-4">
-        {firstJoined ? (
-          <Link
-            href={`/c/${firstJoined.name}/submit`}
-            className="flex items-center justify-center gap-2 w-full bg-forest-accent hover:bg-forest-accent-hover text-white py-3 px-4 rounded-xl font-semibold transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            Create Post
-          </Link>
-        ) : (
-          <Link
-            href="/"
-            className="flex items-center justify-center gap-2 w-full bg-forest-surface border border-forest-border text-forest-muted py-3 px-4 rounded-xl font-semibold transition-colors"
-          >
-            Join a community to post
-          </Link>
-        )}
       </div>
     </aside>
   );

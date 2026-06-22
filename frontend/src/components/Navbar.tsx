@@ -33,8 +33,8 @@ export function Navbar() {
       <header
         className="sticky top-0 z-40 bg-forest-bg/80 backdrop-blur-md border-b border-forest-border"
       >
-        <div className="max-w-[1600px] mx-auto px-4 h-14 flex items-center gap-3 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        <div className="max-w-[1600px] mx-auto px-4 h-14 grid grid-cols-[1fr_min(100%,28rem)_1fr] items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 justify-self-start">
             <button
               type="button"
               onClick={() => setIsMenuOpen(true)}
@@ -54,19 +54,35 @@ export function Navbar() {
             </Link>
           </div>
 
-          <div className="flex-1 flex justify-center min-w-0 px-2 sm:px-4">
-            <div
-              className="hidden sm:flex w-full max-w-md items-center gap-2 px-3 py-2 rounded-xl border border-forest-border bg-forest-surface/50 text-forest-muted"
-              aria-hidden="true"
-            >
-              <Search className="w-4 h-4 flex-shrink-0" />
-              <span className="text-sm truncate">Search communities and posts</span>
-            </div>
-          </div>
+          <form
+            role="search"
+            className="hidden sm:flex w-full min-w-0 items-center gap-2 px-3 py-2 rounded-xl border border-forest-border bg-forest-surface/50 text-forest-muted justify-self-center"
+            onSubmit={(e) => e.preventDefault()}
+          >
+            <Search className="w-4 h-4 flex-shrink-0" aria-hidden />
+            <input
+              type="search"
+              readOnly
+              tabIndex={-1}
+              aria-disabled="true"
+              placeholder="Search communities and posts"
+              className="w-full min-w-0 bg-transparent text-sm text-forest-muted placeholder:text-forest-muted focus:outline-none cursor-default"
+            />
+          </form>
 
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 justify-self-end min-h-9 min-w-[9.5rem] sm:min-w-[11.5rem] md:min-w-[13rem] justify-end">
             {isLoading ? (
-              <span className="text-sm text-forest-muted px-2">…</span>
+              <div
+                className="flex items-center gap-2 sm:gap-3"
+                aria-busy="true"
+                aria-label="Loading account"
+              >
+                <div className="w-8 h-8 rounded-full bg-forest-surface animate-pulse" />
+                <div className="hidden md:block space-y-1.5">
+                  <div className="h-3.5 w-20 rounded bg-forest-surface animate-pulse" />
+                  <div className="h-3 w-14 rounded bg-forest-surface animate-pulse" />
+                </div>
+              </div>
             ) : user ? (
               <>
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0">

@@ -1,13 +1,14 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/context/AppContext';
-import { getCommunityByName } from '@/data/mockData';
+import { getCommunityByName } from '@/lib/mappers';
 
 export function SubmitPostView({ name }: { name: string }) {
   const router = useRouter();
-  const { communities, addPost } = useAppContext();
+  const { communities, addPost, user } = useAppContext();
   const community = getCommunityByName(communities, name);
 
   const [title, setTitle] = useState('');
@@ -19,6 +20,34 @@ export function SubmitPostView({ name }: { name: string }) {
         <h2 className="text-2xl font-bold text-forest-text">
           Community not found
         </h2>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="text-center py-20 bg-forest-surface border border-forest-border rounded-2xl">
+        <h2 className="text-xl font-bold text-forest-text mb-2">
+          Log in to post
+        </h2>
+        <p className="text-forest-muted mb-6">
+          You need an account to post in c/{community.name}.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link
+            href="/login"
+            className="px-6 py-2 rounded-xl font-semibold bg-forest-accent text-white hover:bg-forest-accent-hover transition-colors"
+          >
+            Log in
+          </Link>
+          <button
+            type="button"
+            onClick={() => router.push(`/c/${community.name}`)}
+            className="px-6 py-2 rounded-xl font-semibold text-forest-text hover:bg-forest-bg transition-colors"
+          >
+            Back to c/{community.name}
+          </button>
+        </div>
       </div>
     );
   }

@@ -135,3 +135,76 @@ export async function logoutUser(refreshToken: string): Promise<void> {
 export async function fetchCurrentUser(accessToken: string): Promise<ApiUser> {
   return request<ApiUser>('/users/me', {}, accessToken);
 }
+
+export interface ApiUserPublic {
+  id: string;
+  username: string;
+  display_name: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  karma: number;
+  created_at: string;
+}
+
+export interface ApiCommunity {
+  id: string;
+  name: string;
+  display_name: string;
+  description: string | null;
+  rules: unknown[] | null;
+  icon_url: string | null;
+  banner_url: string | null;
+  creator_id: string;
+  member_count: number;
+  created_at: string;
+}
+
+export interface ApiPostFeedItem {
+  id: string;
+  title: string;
+  content: string | null;
+  community_id: string;
+  author: ApiUserPublic;
+  score: number;
+  upvotes: number;
+  downvotes: number;
+  user_vote: number;
+  comment_count: number;
+  created_at: string;
+  is_deleted: boolean;
+}
+
+export async function fetchCommunities(): Promise<ApiCommunity[]> {
+  return request<ApiCommunity[]>('/communities');
+}
+
+export async function fetchCommunity(name: string): Promise<ApiCommunity> {
+  return request<ApiCommunity>(`/communities/${encodeURIComponent(name)}`);
+}
+
+export async function fetchGlobalPosts(
+  params: { limit?: number; offset?: number } = {},
+): Promise<ApiPostFeedItem[]> {
+  const search = new URLSearchParams();
+  if (params.limit != null) search.set('limit', String(params.limit));
+  if (params.offset != null) search.set('offset', String(params.offset));
+  const qs = search.toString();
+  return request<ApiPostFeedItem[]>(`/posts${qs ? `?${qs}` : ''}`);
+}
+
+export async function fetchCommunityPosts(
+  name: string,
+  params: { limit?: number; offset?: number } = {},
+): Promise<ApiPostFeedItem[]> {
+  const search = new URLSearchParams();
+  if (params.limit != null) search.set('limit', String(params.limit));
+  if (params.offset != null) search.set('offset', String(params.offset));
+  const qs = search.toString();
+  return request<ApiPostFeedItem[]>(
+    `/communities/${encodeURIComponent(name)}/posts${qs ? `?${qs}` : ''}`,
+  );
+}
+
+export async function fetchPost(postId: string): Promise<ApiPostFeedItem> {
+  return request<ApiPostFeedItem>(`/posts/${encodeURIComponent(postId)}`);
+}

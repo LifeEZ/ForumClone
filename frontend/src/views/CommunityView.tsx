@@ -1,26 +1,60 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAppContext } from '@/context/AppContext';
+import { CommunityPostActions } from '@/components/CommunityPostActions';
 import { PostCard } from '@/components/PostCard';
 import { SortBar } from '@/components/SortBar';
 import { RemoteImage } from '@/components/RemoteImage';
-import { getCommunityByName } from '@/data/mockData';
+import { ApiError, fetchCommunityPosts } from '@/lib/api';
+import { getCommunityByName, mapApiPost, updatePostVote } from '@/lib/mappers';
+import { Post } from '@/types';
 
 export function CommunityView({ name }: { name: string }) {
-  const { communities, posts, toggleJoinCommunity } = useAppContext();
+  const { communities, communitiesLoading, toggleJoinCommunity, user } =
+    useAppContext();
   const community = getCommunityByName(communities, name);
 
-  const communityPosts = community
-    ? [...posts]
-        .filter((p) => p.communityId === community.id)
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        )
-    : [];
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!community) {
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPosts() {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchCommunityPosts(name, { limit: 20 });
+        if (cancelled) return;
+        setPosts(data.map(mapApiPost));
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof ApiError && err.status === 404) {
+          setError('not_found');
+        } else {
+          setError(
+            err instanceof ApiError ? err.message : 'Could not load posts',
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void loadPosts();
+    return () => {
+      cancelled = true;
+    };
+  }, [name]);
+
+  const handleVote = (postId: string, vote: 1 | -1 | 0) => {
+    setPosts((prev) => updatePostVote(prev, postId, vote));
+  };
+
+  if (!community && !communitiesLoading && communities.length > 0) {
     return (
       <div className="text-center py-20">
         <h2 className="text-2xl font-bold text-forest-text">
@@ -30,8 +64,16 @@ export function CommunityView({ name }: { name: string }) {
     );
   }
 
+  if (!community) {
+    return (
+      <div className="text-center py-20 text-forest-muted">
+        Loading community…
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full">
+    <div className="w-full pb-24 sm:pb-0">
       <div className="bg-forest-surface border border-forest-border rounded-2xl overflow-hidden mb-6 sm:mb-8">
         <div className="relative h-32 sm:h-48 w-full bg-forest-bg">
           <RemoteImage
@@ -63,17 +105,13 @@ export function CommunityView({ name }: { name: string }) {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => toggleJoinCommunity(community.id)}
-              className={`px-6 py-2 rounded-xl font-semibold transition-colors w-full sm:w-auto ${
-                community.isJoined
-                  ? 'bg-forest-bg border border-forest-border text-forest-text hover:bg-forest-surface-hover'
-                  : 'bg-forest-accent text-white hover:bg-forest-accent-hover'
-              }`}
-            >
-              {community.isJoined ? 'Joined' : 'Join'}
-            </button>
+            <div className="hidden sm:block">
+              <CommunityPostActions
+                community={community}
+                user={user}
+                onJoin={() => toggleJoinCommunity(community.id)}
+              />
+            </div>
           </div>
 
           <p className="mt-4 text-forest-text/90 max-w-2xl">
@@ -84,7 +122,16 @@ export function CommunityView({ name }: { name: string }) {
 
       <SortBar />
 
-      {communityPosts.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-20 text-forest-muted">Loading posts…</div>
+      ) : error && error !== 'not_found' ? (
+        <div className="text-center py-20 bg-forest-surface border border-forest-border rounded-2xl">
+          <h2 className="text-xl font-bold text-forest-text mb-2">
+            Could not load posts
+          </h2>
+          <p className="text-forest-muted">{error}</p>
+        </div>
+      ) : posts.length === 0 ? (
         <div className="text-center py-20 bg-forest-surface border border-forest-border rounded-2xl">
           <h2 className="text-xl font-bold text-forest-text mb-2">
             No posts yet
@@ -95,18 +142,31 @@ export function CommunityView({ name }: { name: string }) {
         </div>
       ) : (
         <div className="space-y-4 sm:space-y-6">
-          {communityPosts.map((post, index) => (
+          {posts.map((post, index) => (
             <motion.div
               key={post.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
             >
-              <PostCard post={post} community={community} />
+              <PostCard
+                post={post}
+                community={community}
+                onVote={(vote) => handleVote(post.id, vote)}
+              />
             </motion.div>
           ))}
         </div>
       )}
+
+      <div className="fixed bottom-0 inset-x-0 z-30 border-t border-forest-border bg-forest-bg/95 backdrop-blur-md p-4 sm:hidden">
+        <CommunityPostActions
+          community={community}
+          user={user}
+          onJoin={() => toggleJoinCommunity(community.id)}
+          compact
+        />
+      </div>
     </div>
   );
 }

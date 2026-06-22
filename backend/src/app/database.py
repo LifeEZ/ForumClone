@@ -10,6 +10,7 @@ def utc_now() -> datetime:
     """Naive UTC for TIMESTAMP WITHOUT TIME ZONE columns."""
     return datetime.now(UTC).replace(tzinfo=None)
 
+
 engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,

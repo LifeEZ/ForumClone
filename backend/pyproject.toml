@@ -28,6 +28,9 @@ dev = [
     "coverage>=7.5.0",
 ]
 
+[project.scripts]
+seed = "app.seed:main"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

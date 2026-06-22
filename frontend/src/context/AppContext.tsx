@@ -1,10 +1,17 @@
 'use client';
 
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Post, Community, Comment, User } from '@/types';
 import { useAuth } from '@/context/AuthContext';
-import { ApiUser } from '@/lib/api';
-import { mockPosts, mockCommunities, mockComments } from '@/data/mockData';
+import { ApiError, ApiUser, fetchCommunities } from '@/lib/api';
+import { mapApiCommunity } from '@/lib/mappers';
+import { mockComments } from '@/data/mockData';
 
 function mapAuthUser(apiUser: ApiUser): User {
   return {
@@ -16,8 +23,9 @@ function mapAuthUser(apiUser: ApiUser): User {
 }
 
 interface AppContextType {
-  posts: Post[];
   communities: Community[];
+  communitiesLoading: boolean;
+  communitiesError: string | null;
   comments: Record<string, Comment[]>;
   user: User | null;
   toggleJoinCommunity: (communityId: string) => void;
@@ -48,10 +56,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { user: authUser } = useAuth();
   const user = authUser ? mapAuthUser(authUser) : null;
 
-  const [posts, setPosts] = useState<Post[]>(mockPosts);
-  const [communities, setCommunities] = useState<Community[]>(mockCommunities);
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [communitiesLoading, setCommunitiesLoading] = useState(true);
+  const [communitiesError, setCommunitiesError] = useState<string | null>(null);
   const [comments, setComments] =
     useState<Record<string, Comment[]>>(mockComments);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCommunities() {
+      setCommunitiesLoading(true);
+      setCommunitiesError(null);
+      try {
+        const data = await fetchCommunities();
+        if (cancelled) return;
+        setCommunities(data.map((c) => mapApiCommunity(c, false)));
+      } catch (err) {
+        if (cancelled) return;
+        const message =
+          err instanceof ApiError
+            ? err.message
+            : 'Could not load communities';
+        setCommunitiesError(message);
+      } finally {
+        if (!cancelled) setCommunitiesLoading(false);
+      }
+    }
+
+    void loadCommunities();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const toggleJoinCommunity = (communityId: string) => {
     setCommunities((prev) =>
@@ -67,24 +104,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const votePost = (postId: string, vote: 1 | -1 | 0) => {
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id !== postId) return p;
-        let newUpvotes = p.upvotes;
-        let newDownvotes = p.downvotes;
-        if (p.userVote === 1) newUpvotes--;
-        if (p.userVote === -1) newDownvotes--;
-        if (vote === 1) newUpvotes++;
-        if (vote === -1) newDownvotes++;
-        return {
-          ...p,
-          upvotes: newUpvotes,
-          downvotes: newDownvotes,
-          userVote: vote,
-        };
-      }),
-    );
+  const votePost = (_postId: string, _vote: 1 | -1 | 0) => {
+    // Wired in slice 7; per-view local state handles display until then.
   };
 
   const voteCommentRecursive = (
@@ -125,7 +146,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const addPost = (
-    postData: Omit<
+    _postData: Omit<
       Post,
       | 'id'
       | 'createdAt'
@@ -137,84 +158,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     >,
   ) => {
     if (!user) return '';
-    const newPost: Post = {
-      ...postData,
-      id: `p_${Date.now()}`,
-      author: user,
-      createdAt: new Date().toISOString(),
-      upvotes: 1,
-      downvotes: 0,
-      userVote: 1,
-      commentCount: 0,
-    };
-    setPosts((prev) => [newPost, ...prev]);
-    return newPost.id;
-  };
-
-  const addCommentRecursive = (
-    commentList: Comment[],
-    parentId: string,
-    newComment: Comment,
-  ): Comment[] => {
-    return commentList.map((c) => {
-      if (c.id === parentId) {
-        return {
-          ...c,
-          replies: [...(c.replies || []), newComment],
-        };
-      }
-      if (c.replies) {
-        return {
-          ...c,
-          replies: addCommentRecursive(c.replies, parentId, newComment),
-        };
-      }
-      return c;
-    });
+    return `p_${Date.now()}`;
   };
 
   const addComment = (
-    postId: string,
-    parentId: string | null,
-    content: string,
+    _postId: string,
+    _parentId: string | null,
+    _content: string,
   ) => {
-    if (!user) return;
-    const newComment: Comment = {
-      id: `cm_${Date.now()}`,
-      postId,
-      parentId,
-      author: user,
-      createdAt: new Date().toISOString(),
-      content,
-      upvotes: 1,
-      downvotes: 0,
-      userVote: 1,
-    };
-    setComments((prev) => {
-      const postComments = prev[postId] || [];
-      if (parentId === null) {
-        return {
-          ...prev,
-          [postId]: [...postComments, newComment],
-        };
-      }
-      return {
-        ...prev,
-        [postId]: addCommentRecursive(postComments, parentId, newComment),
-      };
-    });
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId ? { ...p, commentCount: p.commentCount + 1 } : p,
-      ),
-    );
+    // Disabled until slice 6.
   };
 
   return (
     <AppContext.Provider
       value={{
-        posts,
         communities,
+        communitiesLoading,
+        communitiesError,
         comments,
         user,
         toggleJoinCommunity,

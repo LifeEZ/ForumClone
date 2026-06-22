@@ -7,6 +7,7 @@ cp .env.example .env
 uv sync
 docker compose -f ../docker-compose.yml up -d
 uv run alembic upgrade head
+uv run seed
 uv run uvicorn app.main:app --reload --app-dir src
 ```
 
