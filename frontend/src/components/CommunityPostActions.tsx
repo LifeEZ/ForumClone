@@ -1,6 +1,11 @@
+'use client';
+
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
+import { motion } from 'framer-motion';
 import type { Community, User } from '@/types';
+import { JoinCommunityButton } from '@/components/JoinCommunityButton';
+import { springBouncy } from '@/lib/motion';
 
 interface CommunityPostActionsProps {
   community: Community;
@@ -22,23 +27,20 @@ export function CommunityPostActions({
   const actionClass = compact
     ? 'flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl font-semibold transition-colors'
     : 'flex items-center justify-center gap-2 px-6 py-2 rounded-xl font-semibold transition-colors';
+  const joinClass = `${actionClass} bg-forest-accent text-white hover:bg-forest-accent-hover shadow-lg shadow-forest-accent/15`;
 
   if (!user) {
     return (
       <div className={layout}>
         <Link
           href="/login"
-          className={`${actionClass} border border-forest-border text-forest-text hover:bg-forest-surface`}
+          className={`${actionClass} border border-forest-border/70 text-forest-text hover:bg-forest-surface`}
         >
           Log in to post
         </Link>
-        <button
-          type="button"
-          onClick={onJoin}
-          className={`${actionClass} bg-forest-accent text-white hover:bg-forest-accent-hover`}
-        >
-          Join
-        </button>
+        <JoinCommunityButton onClick={onJoin} className={joinClass}>
+          Join community
+        </JoinCommunityButton>
       </div>
     );
   }
@@ -46,33 +48,31 @@ export function CommunityPostActions({
   if (!community.isJoined) {
     return (
       <div className={layout}>
-        <button
-          type="button"
-          onClick={onJoin}
-          className={`${actionClass} bg-forest-accent text-white hover:bg-forest-accent-hover`}
-        >
+        <JoinCommunityButton onClick={onJoin} className={joinClass}>
           Join to post
-        </button>
+        </JoinCommunityButton>
       </div>
     );
   }
 
   return (
     <div className={layout}>
-      <Link
-        href={`/c/${community.name}/submit`}
-        className={`${actionClass} bg-forest-accent text-white hover:bg-forest-accent-hover`}
-      >
-        <Plus className="w-4 h-4" />
-        Create post
-      </Link>
-      <button
-        type="button"
+      <motion.div whileTap={{ scale: 0.98 }} transition={springBouncy}>
+        <Link
+          href={`/c/${community.name}/submit`}
+          className={`${actionClass} bg-forest-accent text-white hover:bg-forest-accent-hover shadow-lg shadow-forest-accent/15`}
+        >
+          <Plus className="w-4 h-4" />
+          Create post
+        </Link>
+      </motion.div>
+      <JoinCommunityButton
         onClick={onJoin}
-        className={`${actionClass} bg-forest-bg border border-forest-border text-forest-text hover:bg-forest-surface-hover`}
+        joined
+        className={`${actionClass} bg-forest-bg border border-forest-border/70 text-forest-text hover:bg-forest-surface-hover`}
       >
         Joined
-      </button>
+      </JoinCommunityButton>
     </div>
   );
 }

@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { ArrowBigUp, ArrowBigDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { PollenBurst } from '@/components/PollenBurst';
+import { springBouncy } from '@/lib/motion';
 
 interface VoteControlProps {
   upvotes: number;
@@ -19,11 +22,16 @@ export function VoteControl({
   horizontal = false,
 }: VoteControlProps) {
   const score = upvotes - downvotes;
+  const [pollenTrigger, setPollenTrigger] = useState(0);
 
   const handleUpvote = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onVote(userVote === 1 ? 0 : 1);
+    const nextVote = userVote === 1 ? 0 : 1;
+    if (nextVote === 1) {
+      setPollenTrigger((count) => count + 1);
+    }
+    onVote(nextVote);
   };
 
   const handleDownvote = (e: React.MouseEvent) => {
@@ -34,25 +42,28 @@ export function VoteControl({
 
   return (
     <div
-      className={`flex items-center gap-1 bg-forest-bg/50 rounded-full p-1 border border-forest-border ${
+      className={`flex items-center gap-1 overflow-visible bg-forest-bg/50 rounded-full p-1 border border-forest-border/70 ${
         horizontal ? 'flex-row' : 'flex-col sm:flex-row'
       }`}
     >
-      <button
+      <motion.button
         type="button"
         onClick={handleUpvote}
-        className={`p-1.5 rounded-full transition-colors ${
+        whileTap={{ scale: 0.9 }}
+        transition={springBouncy}
+        className={`relative overflow-visible p-1.5 rounded-full transition-colors ${
           userVote === 1
             ? 'text-vote-up bg-vote-up/10'
             : 'text-forest-muted hover:bg-forest-surface-hover hover:text-vote-up'
         }`}
         aria-label="Upvote"
       >
+        <PollenBurst trigger={pollenTrigger} />
         <ArrowBigUp
-          className="w-5 h-5"
+          className="w-5 h-5 relative z-10"
           fill={userVote === 1 ? 'currentColor' : 'none'}
         />
-      </button>
+      </motion.button>
 
       <div className="relative w-8 h-6 flex items-center justify-center overflow-hidden">
         <AnimatePresence mode="popLayout">
@@ -70,11 +81,7 @@ export function VoteControl({
               y: userVote === 1 ? -20 : 20,
               opacity: 0,
             }}
-            transition={{
-              type: 'spring',
-              stiffness: 300,
-              damping: 25,
-            }}
+            transition={springBouncy}
             className={`text-sm font-semibold ${
               userVote === 1
                 ? 'text-vote-up'
@@ -88,9 +95,11 @@ export function VoteControl({
         </AnimatePresence>
       </div>
 
-      <button
+      <motion.button
         type="button"
         onClick={handleDownvote}
+        whileTap={{ scale: 0.9 }}
+        transition={springBouncy}
         className={`p-1.5 rounded-full transition-colors ${
           userVote === -1
             ? 'text-vote-down bg-vote-down/10'
@@ -102,7 +111,7 @@ export function VoteControl({
           className="w-5 h-5"
           fill={userVote === -1 ? 'currentColor' : 'none'}
         />
-      </button>
+      </motion.button>
     </div>
   );
 }

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none" preserveAspectRatio="xMidYMid slice">
+  <rect width="1200" height="400" fill="#0e1612"/>
+  <rect width="1200" height="400" fill="url(#dusk)"/>
+  <ellipse cx="200" cy="420" rx="180" ry="80" fill="#1a2820"/>
+  <ellipse cx="600" cy="440" rx="320" ry="100" fill="#1e2f24"/>
+  <ellipse cx="1000" cy="410" rx="200" ry="90" fill="#1a2820"/>
+  <path d="M0 280 Q300 220 600 260 T1200 240 V400 H0Z" fill="#243a2e"/>
+  <path d="M0 300 Q400 250 800 290 T1200 270 V400 H0Z" fill="#2a3d32" opacity="0.8"/>
+  <circle cx="1050" cy="80" r="40" fill="#d4a574" opacity="0.25"/>
+  <circle cx="1080" cy="60" r="55" fill="#d4a574" opacity="0.12"/>
+  <defs>
+    <linearGradient id="dusk" x1="0" y1="0" x2="1200" y2="400" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1a2820"/>
+      <stop offset="0.5" stop-color="#101812"/>
+      <stop offset="1" stop-color="#1e2f24"/>
+    </linearGradient>
+  </defs>
+</svg>

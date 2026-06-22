@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { PostCard } from '@/components/PostCard';
 import { CommentThread } from '@/components/CommentThread';
 import { ApiError, fetchPost } from '@/lib/api';
+import { fadeIn, fadeInDelayed } from '@/lib/motion';
 import {
   getCommunityByName,
   mapApiPost,
@@ -98,17 +100,29 @@ export function PostDetailView({ name, id }: { name: string; id: string }) {
         <span className="font-medium">Back</span>
       </button>
 
-      <div className="mb-8">
+      <motion.div
+        key={post.id}
+        className="mb-8"
+        variants={fadeIn}
+        initial="hidden"
+        animate="visible"
+      >
         <PostCard
           post={post}
           community={community}
           isDetail
           onVote={handleVote}
         />
-      </div>
+      </motion.div>
 
-      <div className="bg-forest-surface border border-forest-border rounded-2xl p-4 sm:p-6">
-        <h3 className="text-lg font-bold text-forest-text mb-6">
+      <motion.div
+        key={`${post.id}-comments`}
+        className="bg-forest-surface/90 border border-forest-border/50 rounded-2xl p-4 sm:p-6 shadow-md shadow-black/10"
+        variants={fadeInDelayed}
+        initial="hidden"
+        animate="visible"
+      >
+        <h3 className="font-display text-lg font-semibold text-forest-text mb-6">
           Comments ({postComments.length > 0 ? postComments.length : post.commentCount})
         </h3>
 
@@ -120,7 +134,7 @@ export function PostDetailView({ name, id }: { name: string; id: string }) {
 
         {postComments.length === 0 ? (
           <div className="text-center py-10 text-forest-muted">
-            No comments yet. Be the first to share your thoughts!
+            No comments yet — be the first to share your thoughts.
           </div>
         ) : (
           <div className="space-y-6">
@@ -133,7 +147,7 @@ export function PostDetailView({ name, id }: { name: string; id: string }) {
             ))}
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

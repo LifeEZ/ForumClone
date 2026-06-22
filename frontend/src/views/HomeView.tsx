@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { fadeUp } from '@/lib/motion';
 import { useAppContext } from '@/context/AppContext';
+import { CommunitiesStrip } from '@/components/CommunitiesStrip';
 import { PostCard } from '@/components/PostCard';
 import { SortBar } from '@/components/SortBar';
 import { ApiError, fetchGlobalPosts } from '@/lib/api';
@@ -47,24 +49,27 @@ export function HomeView() {
 
   return (
     <div className="w-full">
+      <CommunitiesStrip />
       <SortBar />
 
       {loading ? (
-        <div className="text-center py-20 text-forest-muted">Loading posts…</div>
+        <div className="text-center py-20 text-forest-muted">
+          Gathering posts…
+        </div>
       ) : error ? (
-        <div className="text-center py-20 bg-forest-surface border border-forest-border rounded-2xl">
-          <h2 className="text-xl font-bold text-forest-text mb-2">
+        <div className="text-center py-20 bg-forest-surface/80 border border-forest-border/40 rounded-2xl shadow-md shadow-black/10">
+          <h2 className="font-display text-xl font-semibold text-forest-text mb-2">
             Could not load feed
           </h2>
           <p className="text-forest-muted">{error}</p>
         </div>
       ) : posts.length === 0 ? (
-        <div className="text-center py-20 bg-forest-surface border border-forest-border rounded-2xl">
-          <h2 className="text-xl font-bold text-forest-text mb-2">
-            No posts yet
+        <div className="text-center py-20 bg-forest-surface/80 border border-forest-border/40 rounded-2xl shadow-md shadow-black/10">
+          <h2 className="font-display text-xl font-semibold text-forest-text mb-2">
+            Nothing here yet
           </h2>
           <p className="text-forest-muted">
-            Run the seed script on the backend to load demo content.
+            Be the first to post — or join a community to see its feed here.
           </p>
         </div>
       ) : (
@@ -76,9 +81,10 @@ export function HomeView() {
             return (
               <motion.div
                 key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
+                custom={index}
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
               >
                 <PostCard
                   post={post}

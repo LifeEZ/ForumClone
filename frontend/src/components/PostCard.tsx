@@ -47,31 +47,54 @@ export function PostCard({
   return (
     <Wrapper
       onClick={handleCardClick}
-      className={`bg-forest-surface border-forest-border rounded-2xl p-4 sm:p-5 ${
+      className={`bg-forest-surface/90 border-forest-border rounded-2xl p-4 sm:p-5 ${
         !isDetail
-          ? 'border hover:border-forest-muted/30 transition-colors cursor-pointer'
-          : ''
+          ? 'border border-forest-border/50 hover:border-forest-muted/25 hover:shadow-lg hover:shadow-black/10 transition-all cursor-pointer'
+          : 'shadow-md shadow-black/10'
       }`}
     >
+      {community && !isDetail && (
+        <Link
+          href={`/c/${community.name}`}
+          className="flex items-center gap-3 mb-3 -mt-1 group"
+        >
+          <RemoteImage
+            src={community.avatarUrl}
+            alt={community.displayName}
+            width={32}
+            height={32}
+            className="w-8 h-8 rounded-full object-cover ring-2 ring-forest-border group-hover:ring-forest-accent/60 transition-all"
+          />
+          <div className="min-w-0">
+            <p className="font-display text-sm font-semibold text-forest-text group-hover:text-forest-accent transition-colors truncate">
+              {community.displayName}
+            </p>
+            <p className="text-xs text-forest-muted">c/{community.name}</p>
+          </div>
+        </Link>
+      )}
+
       <div className="flex items-center gap-2 mb-3 text-sm">
-        {community && (
-          <Link
-            href={`/c/${community.name}`}
-            className="flex items-center gap-2 group"
-          >
-            <RemoteImage
-              src={community.avatarUrl}
-              alt={community.displayName}
-              width={24}
-              height={24}
-              className="w-6 h-6 rounded-full object-cover"
-            />
-            <span className="font-semibold text-forest-text group-hover:underline">
-              c/{community.name}
-            </span>
-          </Link>
+        {community && isDetail && (
+          <>
+            <Link
+              href={`/c/${community.name}`}
+              className="flex items-center gap-2 group"
+            >
+              <RemoteImage
+                src={community.avatarUrl}
+                alt={community.displayName}
+                width={32}
+                height={32}
+                className="w-8 h-8 rounded-full object-cover"
+              />
+              <span className="font-display font-semibold text-forest-text group-hover:underline">
+                c/{community.name}
+              </span>
+            </Link>
+            <span className="text-forest-muted">•</span>
+          </>
         )}
-        <span className="text-forest-muted">•</span>
         <span className="text-forest-muted">
           {post.author.username}
           {post.author.karma != null && (

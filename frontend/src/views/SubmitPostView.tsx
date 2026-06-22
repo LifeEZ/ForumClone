@@ -55,11 +55,11 @@ export function SubmitPostView({ name }: { name: string }) {
   if (!community.isJoined) {
     return (
       <div className="text-center py-20 bg-forest-surface border border-forest-border rounded-2xl">
-        <h2 className="text-xl font-bold text-forest-text mb-2">
+        <h2 className="font-display text-xl font-semibold text-forest-text mb-2">
           Join this community first
         </h2>
         <p className="text-forest-muted mb-6">
-          You need to be a member of c/{community.name} to post here.
+          Become a member of c/{community.name} before you post here.
         </p>
         <button
           type="button"
@@ -87,10 +87,12 @@ export function SubmitPostView({ name }: { name: string }) {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-forest-text mb-2">
-        Create a post
+      <h1 className="font-display text-2xl font-semibold text-forest-text mb-2">
+        Start a post
       </h1>
-      <p className="text-forest-muted mb-6">Posting to c/{community.name}</p>
+      <p className="text-forest-muted mb-6">
+        Sharing in c/{community.name}
+      </p>
 
       <form
         onSubmit={handleSubmit}

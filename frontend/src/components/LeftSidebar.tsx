@@ -28,8 +28,8 @@ export function LeftSidebar() {
       </nav>
 
       <div className="mb-6">
-        <h3 className="px-3 text-xs font-semibold text-forest-muted uppercase tracking-wider mb-3">
-          Your Communities
+        <h3 className="font-display px-3 text-xs font-semibold text-forest-muted uppercase tracking-wider mb-3">
+          Your communities
         </h3>
         <div className="space-y-1">
           {joinedCommunities.map((community) => (
@@ -49,7 +49,7 @@ export function LeftSidebar() {
                 height={24}
                 className="w-6 h-6 rounded-full object-cover"
               />
-              <span className="truncate">{community.displayName}</span>
+              <span className="font-display truncate">{community.displayName}</span>
             </Link>
           ))}
         </div>

@@ -48,7 +48,7 @@ export function Navbar() {
               className="flex items-center gap-2 text-forest-accent hover:text-forest-accent-hover transition-colors"
             >
               <Trees className="w-6 h-6 sm:w-7 sm:h-7" />
-              <span className="text-lg font-bold tracking-tight text-forest-text">
+              <span className="font-display text-lg font-semibold tracking-tight text-forest-text">
                 Hiver
               </span>
             </Link>
@@ -151,8 +151,8 @@ export function Navbar() {
 
             <div className="flex-1 overflow-y-auto py-4 px-3">
               <div className="mb-6">
-                <h3 className="px-3 text-xs font-semibold text-forest-muted uppercase tracking-wider mb-3">
-                  Your Communities
+                <h3 className="font-display px-3 text-xs font-semibold text-forest-muted uppercase tracking-wider mb-3">
+                  Your communities
                 </h3>
                 <div className="space-y-1">
                   {joinedCommunities.map((community) => (
@@ -169,7 +169,7 @@ export function Navbar() {
                         height={24}
                         className="w-6 h-6 rounded-full object-cover"
                       />
-                      <span className="truncate">{community.displayName}</span>
+                      <span className="font-display truncate">{community.displayName}</span>
                     </Link>
                   ))}
                 </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { fadeIn, fadeUp } from '@/lib/motion';
 import { useAppContext } from '@/context/AppContext';
 import { CommunityPostActions } from '@/components/CommunityPostActions';
 import { PostCard } from '@/components/PostCard';
@@ -74,14 +75,23 @@ export function CommunityView({ name }: { name: string }) {
 
   return (
     <div className="w-full pb-24 sm:pb-0">
-      <div className="bg-forest-surface border border-forest-border rounded-2xl overflow-hidden mb-6 sm:mb-8">
+      <motion.div
+        className="bg-forest-surface/95 border border-forest-border/40 rounded-2xl overflow-hidden mb-6 sm:mb-8 shadow-xl shadow-black/20"
+        variants={fadeIn}
+        initial="hidden"
+        animate="visible"
+      >
         <div className="relative h-32 sm:h-48 w-full bg-forest-bg">
           <RemoteImage
             src={community.bannerUrl}
             alt=""
             fill
             sizes="(max-width: 768px) 100vw, 672px"
-            className="object-cover opacity-80"
+            className="object-cover"
+          />
+          <div
+            className="absolute inset-0 bg-gradient-to-t from-forest-surface via-forest-surface/40 to-forest-glow/10"
+            aria-hidden
           />
         </div>
         <div className="p-4 sm:p-6 relative">
@@ -97,7 +107,7 @@ export function CommunityView({ name }: { name: string }) {
 
           <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-forest-text">
+              <h1 className="font-display text-2xl sm:text-3xl font-semibold text-forest-text">
                 {community.displayName}
               </h1>
               <p className="text-forest-muted font-medium">
@@ -118,26 +128,28 @@ export function CommunityView({ name }: { name: string }) {
             {community.description}
           </p>
         </div>
-      </div>
+      </motion.div>
 
       <SortBar />
 
       {loading ? (
-        <div className="text-center py-20 text-forest-muted">Loading posts…</div>
+        <div className="text-center py-20 text-forest-muted">
+          Gathering posts…
+        </div>
       ) : error && error !== 'not_found' ? (
-        <div className="text-center py-20 bg-forest-surface border border-forest-border rounded-2xl">
-          <h2 className="text-xl font-bold text-forest-text mb-2">
+        <div className="text-center py-20 bg-forest-surface/80 border border-forest-border/40 rounded-2xl shadow-md shadow-black/10">
+          <h2 className="font-display text-xl font-semibold text-forest-text mb-2">
             Could not load posts
           </h2>
           <p className="text-forest-muted">{error}</p>
         </div>
       ) : posts.length === 0 ? (
-        <div className="text-center py-20 bg-forest-surface border border-forest-border rounded-2xl">
-          <h2 className="text-xl font-bold text-forest-text mb-2">
+        <div className="text-center py-20 bg-forest-surface/80 border border-forest-border/40 rounded-2xl shadow-md shadow-black/10">
+          <h2 className="font-display text-xl font-semibold text-forest-text mb-2">
             No posts yet
           </h2>
           <p className="text-forest-muted">
-            Be the first to post in c/{community.name}!
+            Be the first to post in c/{community.name}.
           </p>
         </div>
       ) : (
@@ -145,9 +157,10 @@ export function CommunityView({ name }: { name: string }) {
           {posts.map((post, index) => (
             <motion.div
               key={post.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
+              custom={index}
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
             >
               <PostCard
                 post={post}
