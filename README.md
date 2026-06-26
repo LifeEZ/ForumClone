@@ -1,6 +1,6 @@
 # Hiver
 
-Monorepo for **Hiver** — a community discussion platform (portfolio demo).
+Monorepo for **Hiver** — a community discussion platform.
 
 **v1 plan:** [`docs/PLAN-v1.md`](docs/PLAN-v1.md) · **Domain glossary:** [`CONTEXT.md`](CONTEXT.md)
 

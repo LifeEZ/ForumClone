@@ -30,10 +30,6 @@ htmlcov/
 coverage.xml
 *.log
 
-# User uploads (keep directory, ignore files)
-backend/uploads/*
-!backend/uploads/.gitkeep
-
 # Frontend (Next.js / pnpm)
 node_modules/
 frontend/.next/
@@ -61,6 +57,7 @@ docker-compose.*.local.yml
 .DS_Store
 Thumbs.db
 Desktop.ini
+*.pem
 
 # Local tooling
 .codegraph/
