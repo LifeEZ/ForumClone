@@ -70,4 +70,4 @@ Identity and content need a database and run their migrations with `uv run alemb
 
 ## Status
 
-Slices 1-2 are implemented in the new architecture: guest browsing (global feed, communities, post detail, comment threads) and full auth (register / login / logout / refresh). Joining, creating communities/posts, commenting, and voting (slices 3-7) are not wired to the backend yet.
+Slices 1-3 are implemented: guest browsing, full auth, and join/leave with personalized home feed. Creating communities/posts, commenting, and voting (slices 4-7) are not wired to the backend yet.

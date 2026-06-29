@@ -13,13 +13,31 @@ import { getCommunityByName, mapApiPost, updatePostVote } from '@/lib/mappers';
 import { Post } from '@/types';
 
 export function CommunityView({ name }: { name: string }) {
-  const { communities, communitiesLoading, toggleJoinCommunity, user } =
-    useAppContext();
+  const {
+    communities,
+    communitiesLoading,
+    toggleJoinCommunity,
+    joinError,
+    user,
+  } = useAppContext();
   const community = getCommunityByName(communities, name);
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [joinLoading, setJoinLoading] = useState(false);
+
+  const handleJoin = async () => {
+    if (!community || joinLoading) return;
+    setJoinLoading(true);
+    try {
+      await toggleJoinCommunity(community.id);
+    } catch {
+      // joinError is set in AppContext
+    } finally {
+      setJoinLoading(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -119,7 +137,8 @@ export function CommunityView({ name }: { name: string }) {
               <CommunityPostActions
                 community={community}
                 user={user}
-                onJoin={() => toggleJoinCommunity(community.id)}
+                onJoin={handleJoin}
+                joinLoading={joinLoading}
               />
             </div>
           </div>
@@ -127,6 +146,11 @@ export function CommunityView({ name }: { name: string }) {
           <p className="mt-4 text-forest-text/90 max-w-2xl">
             {community.description}
           </p>
+          {joinError && (
+            <p className="mt-2 text-sm text-red-400" role="alert">
+              {joinError}
+            </p>
+          )}
         </div>
       </motion.div>
 
@@ -176,7 +200,8 @@ export function CommunityView({ name }: { name: string }) {
         <CommunityPostActions
           community={community}
           user={user}
-          onJoin={() => toggleJoinCommunity(community.id)}
+          onJoin={handleJoin}
+          joinLoading={joinLoading}
           compact
         />
       </div>

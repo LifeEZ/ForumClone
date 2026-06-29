@@ -1,10 +1,22 @@
 from fastapi import APIRouter, HTTPException, Query
 
-from app.dependencies import SessionDep
+from app.dependencies import CurrentUserDep, SessionDep
 from app.schemas.post import PostFeedItem
+from app.services.membership import list_home_posts
 from app.services.post import PostNotFoundError, get_post, list_posts
 
 router = APIRouter(prefix="/posts", tags=["posts"])
+
+
+@router.get("/home", response_model=list[PostFeedItem])
+async def list_home_posts_endpoint(
+    session: SessionDep,
+    user: CurrentUserDep,
+    offset: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+) -> list[PostFeedItem]:
+    posts = await list_home_posts(session, user.id, offset=offset, limit=limit)
+    return [PostFeedItem.from_post(post) for post in posts]
 
 
 @router.get("", response_model=list[PostFeedItem])

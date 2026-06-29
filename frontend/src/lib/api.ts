@@ -157,6 +157,7 @@ export interface ApiCommunity {
   creator_id: string;
   member_count: number;
   created_at: string;
+  is_member?: boolean | null;
 }
 
 export interface ApiPostFeedItem {
@@ -178,8 +179,15 @@ export async function fetchCommunities(): Promise<ApiCommunity[]> {
   return request<ApiCommunity[]>('/communities');
 }
 
-export async function fetchCommunity(name: string): Promise<ApiCommunity> {
-  return request<ApiCommunity>(`/communities/${encodeURIComponent(name)}`);
+export async function fetchCommunity(
+  name: string,
+  accessToken?: string | null,
+): Promise<ApiCommunity> {
+  return request<ApiCommunity>(
+    `/communities/${encodeURIComponent(name)}`,
+    {},
+    accessToken,
+  );
 }
 
 export async function fetchGlobalPosts(
@@ -207,4 +215,47 @@ export async function fetchCommunityPosts(
 
 export async function fetchPost(postId: string): Promise<ApiPostFeedItem> {
   return request<ApiPostFeedItem>(`/posts/${encodeURIComponent(postId)}`);
+}
+
+export async function fetchHomePosts(
+  accessToken: string,
+  params: { limit?: number; offset?: number } = {},
+): Promise<ApiPostFeedItem[]> {
+  const search = new URLSearchParams();
+  if (params.limit != null) search.set('limit', String(params.limit));
+  if (params.offset != null) search.set('offset', String(params.offset));
+  const qs = search.toString();
+  return request<ApiPostFeedItem[]>(
+    `/posts/home${qs ? `?${qs}` : ''}`,
+    {},
+    accessToken,
+  );
+}
+
+export async function fetchJoinedCommunities(
+  accessToken: string,
+): Promise<ApiCommunity[]> {
+  return request<ApiCommunity[]>('/communities/mine', {}, accessToken);
+}
+
+export async function joinCommunity(
+  accessToken: string,
+  name: string,
+): Promise<ApiCommunity> {
+  return request<ApiCommunity>(
+    `/communities/${encodeURIComponent(name)}/join`,
+    { method: 'POST' },
+    accessToken,
+  );
+}
+
+export async function leaveCommunity(
+  accessToken: string,
+  name: string,
+): Promise<ApiCommunity> {
+  return request<ApiCommunity>(
+    `/communities/${encodeURIComponent(name)}/join`,
+    { method: 'DELETE' },
+    accessToken,
+  );
 }

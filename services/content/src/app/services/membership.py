@@ -1,0 +1,110 @@
+from sqlalchemy import delete, select, update
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.auth import CurrentUser
+from app.models.community import Community
+from app.models.membership import CommunityMembership
+from app.models.post import Post
+from app.services.community import get_community_by_name
+
+
+class AlreadyMemberError(Exception):
+    def __init__(self, community_name: str) -> None:
+        self.community_name = community_name
+        super().__init__(f"Already a member of '{community_name}'")
+
+
+class NotMemberError(Exception):
+    def __init__(self, community_name: str) -> None:
+        self.community_name = community_name
+        super().__init__(f"Not a member of '{community_name}'")
+
+
+async def is_member(session: AsyncSession, user_id: str, community_id: str) -> bool:
+    result = await session.execute(
+        select(CommunityMembership.user_id).where(
+            CommunityMembership.user_id == user_id,
+            CommunityMembership.community_id == community_id,
+        )
+    )
+    return result.scalar_one_or_none() is not None
+
+
+async def join_community(session: AsyncSession, name: str, user: CurrentUser) -> Community:
+    community = await get_community_by_name(session, name)
+    if await is_member(session, user.id, community.id):
+        raise AlreadyMemberError(name)
+
+    session.add(
+        CommunityMembership(
+            user_id=user.id,
+            community_id=community.id,
+            role="member",
+        )
+    )
+    try:
+        await session.flush()
+    except IntegrityError as exc:
+        await session.rollback()
+        raise AlreadyMemberError(name) from exc
+
+    await session.execute(
+        update(Community)
+        .where(Community.id == community.id)
+        .values(member_count=Community.member_count + 1)
+    )
+    await session.flush()
+    await session.refresh(community)
+    return community
+
+
+async def leave_community(session: AsyncSession, name: str, user: CurrentUser) -> Community:
+    community = await get_community_by_name(session, name)
+    if not await is_member(session, user.id, community.id):
+        raise NotMemberError(name)
+
+    await session.execute(
+        delete(CommunityMembership).where(
+            CommunityMembership.user_id == user.id,
+            CommunityMembership.community_id == community.id,
+        )
+    )
+    await session.execute(
+        update(Community)
+        .where(Community.id == community.id)
+        .values(member_count=Community.member_count - 1)
+    )
+    await session.flush()
+    await session.refresh(community)
+    return community
+
+
+async def list_joined_communities(session: AsyncSession, user_id: str) -> list[Community]:
+    result = await session.execute(
+        select(Community)
+        .join(CommunityMembership, CommunityMembership.community_id == Community.id)
+        .where(CommunityMembership.user_id == user_id)
+        .order_by(Community.display_name)
+    )
+    return list(result.scalars().all())
+
+
+async def list_home_posts(
+    session: AsyncSession,
+    user_id: str,
+    *,
+    offset: int = 0,
+    limit: int = 20,
+) -> list[Post]:
+    joined_ids = select(CommunityMembership.community_id).where(
+        CommunityMembership.user_id == user_id
+    )
+    result = await session.execute(
+        select(Post)
+        .where(Post.is_deleted.is_(False), Post.community_id.in_(joined_ids))
+        .order_by(Post.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+    return list(result.scalars().all())
