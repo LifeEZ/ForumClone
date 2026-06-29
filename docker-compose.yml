@@ -1,38 +1,89 @@
 services:
-  db:
+  identity_db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: redditclone
+      POSTGRES_DB: identity_db
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - identity_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  db_test:
+  content_db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: redditclone_test
+      POSTGRES_DB: content_db
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
-      - postgres_test_data:/var/lib/postgresql/data
+      - content_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  identity:
+    build: ./services/identity
+    restart: unless-stopped
+    depends_on:
+      identity_db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@identity_db:5432/identity_db
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    ports:
+      - "8001:8001"
+
+  content:
+    build: ./services/content
+    restart: unless-stopped
+    depends_on:
+      content_db:
+        condition: service_healthy
+      identity:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@content_db:5432/content_db
+      IDENTITY_URL: http://identity:8001
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    ports:
+      - "8002:8002"
+
+  gateway:
+    build: ./services/gateway
+    restart: unless-stopped
+    depends_on:
+      identity:
+        condition: service_started
+      content:
+        condition: service_started
+      redis:
+        condition: service_started
+    environment:
+      IDENTITY_URL: http://identity:8001
+      CONTENT_URL: http://content:8002
+      REDIS_URL: redis://redis:6379/0
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    ports:
+      - "8000:8000"
+
 volumes:
-  postgres_data:
-  postgres_test_data:
+  identity_data:
+  content_data:

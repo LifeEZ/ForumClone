@@ -10,7 +10,7 @@ We use **short-lived JWT access tokens** (15 minutes, verified by signature) plu
 |--------|---------|
 | Session cookies only | Simple, but every API call needs session store lookup; less natural for SPA + separate API |
 | Stateless JWT only (no refresh) | No server-side revocation; long sessions mean long exposure window |
-| OAuth (Google/GitHub) | Out of scope for v1 portfolio; adds integration work |
+| OAuth (Google/GitHub) | Out of scope for v1; adds integration work |
 
 **Consequences**
 
