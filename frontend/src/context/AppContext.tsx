@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -9,7 +10,16 @@ import {
 } from 'react';
 import { Post, Community, Comment, User } from '@/types';
 import { useAuth } from '@/context/AuthContext';
-import { ApiError, ApiUser, fetchCommunities } from '@/lib/api';
+import {
+  ApiError,
+  ApiUser,
+  fetchCommunities,
+  fetchCommunity,
+  fetchJoinedCommunities,
+  getStoredTokens,
+  joinCommunity,
+  leaveCommunity,
+} from '@/lib/api';
 import { mapApiCommunity } from '@/lib/mappers';
 import { mockComments } from '@/data/mockData';
 
@@ -26,9 +36,10 @@ interface AppContextType {
   communities: Community[];
   communitiesLoading: boolean;
   communitiesError: string | null;
+  joinError: string | null;
   comments: Record<string, Comment[]>;
   user: User | null;
-  toggleJoinCommunity: (communityId: string) => void;
+  toggleJoinCommunity: (communityId: string) => Promise<void>;
   votePost: (postId: string, vote: 1 | -1 | 0) => void;
   voteComment: (postId: string, commentId: string, vote: 1 | -1 | 0) => void;
   addPost: (
@@ -53,16 +64,45 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { user: authUser } = useAuth();
+  const { user: authUser, isLoading: authLoading } = useAuth();
   const user = authUser ? mapAuthUser(authUser) : null;
 
   const [communities, setCommunities] = useState<Community[]>([]);
   const [communitiesLoading, setCommunitiesLoading] = useState(true);
   const [communitiesError, setCommunitiesError] = useState<string | null>(null);
+  const [joinError, setJoinError] = useState<string | null>(null);
   const [comments, setComments] =
     useState<Record<string, Comment[]>>(mockComments);
 
+  const applyJoinedState = useCallback(async () => {
+    if (!authUser) {
+      setCommunities((prev) => prev.map((c) => ({ ...c, isJoined: false })));
+      return;
+    }
+
+    const { accessToken } = getStoredTokens();
+    if (!accessToken) return;
+
+    try {
+      const joined = await fetchJoinedCommunities(accessToken);
+      const joinedIds = new Set(joined.map((j) => j.id));
+      const joinedById = new Map(joined.map((j) => [j.id, j]));
+      setCommunities((prev) =>
+        prev.map((c) => {
+          const fresh = joinedById.get(c.id);
+          return fresh
+            ? mapApiCommunity(fresh, true)
+            : { ...c, isJoined: joinedIds.has(c.id) };
+        }),
+      );
+    } catch {
+      // Joined list is best-effort; leave existing state.
+    }
+  }, [authUser]);
+
   useEffect(() => {
+    if (authLoading) return;
+
     let cancelled = false;
 
     async function loadCommunities() {
@@ -71,7 +111,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       try {
         const data = await fetchCommunities();
         if (cancelled) return;
-        setCommunities(data.map((c) => mapApiCommunity(c, false)));
+
+        let joinedIds = new Set<string>();
+        if (authUser) {
+          const { accessToken } = getStoredTokens();
+          if (accessToken) {
+            try {
+              const joined = await fetchJoinedCommunities(accessToken);
+              joinedIds = new Set(joined.map((j) => j.id));
+            } catch {
+              // Fall back to unjoined state for all communities.
+            }
+          }
+        }
+
+        setCommunities(
+          data.map((c) => mapApiCommunity(c, joinedIds.has(c.id))),
+        );
       } catch (err) {
         if (cancelled) return;
         const message =
@@ -88,20 +144,66 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authUser, authLoading]);
 
-  const toggleJoinCommunity = (communityId: string) => {
+  useEffect(() => {
+    void applyJoinedState();
+  }, [applyJoinedState]);
+
+  const toggleJoinCommunity = async (communityId: string) => {
+    const community = communities.find((c) => c.id === communityId);
+    if (!community) return;
+
+    const { accessToken } = getStoredTokens();
+    if (!accessToken) return;
+
+    const wasJoined = community.isJoined;
+    const previousMemberCount = community.memberCount;
+    setJoinError(null);
+
     setCommunities((prev) =>
       prev.map((c) =>
         c.id === communityId
           ? {
               ...c,
-              isJoined: !c.isJoined,
-              memberCount: c.isJoined ? c.memberCount - 1 : c.memberCount + 1,
+              isJoined: !wasJoined,
+              memberCount: wasJoined
+                ? c.memberCount - 1
+                : c.memberCount + 1,
             }
           : c,
       ),
     );
+
+    try {
+      if (wasJoined) {
+        await leaveCommunity(accessToken, community.name);
+      } else {
+        await joinCommunity(accessToken, community.name);
+      }
+      const updated = await fetchCommunity(community.name, accessToken);
+      setCommunities((prev) =>
+        prev.map((c) =>
+          c.id === communityId ? mapApiCommunity(updated) : c,
+        ),
+      );
+    } catch (err) {
+      setCommunities((prev) =>
+        prev.map((c) =>
+          c.id === communityId
+            ? {
+                ...c,
+                isJoined: wasJoined,
+                memberCount: previousMemberCount,
+              }
+            : c,
+        ),
+      );
+      const message =
+        err instanceof ApiError ? err.message : 'Could not update membership';
+      setJoinError(message);
+      throw err;
+    }
   };
 
   const votePost = (_postId: string, _vote: 1 | -1 | 0) => {
@@ -175,6 +277,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         communities,
         communitiesLoading,
         communitiesError,
+        joinError,
         comments,
         user,
         toggleJoinCommunity,

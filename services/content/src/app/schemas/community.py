@@ -29,3 +29,4 @@ class CommunityResponse(BaseModel):
     creator_id: str
     member_count: int
     created_at: datetime
+    is_member: bool | None = None

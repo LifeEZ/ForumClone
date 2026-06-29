@@ -18,17 +18,15 @@ export function mapApiUserPublic(api: ApiUserPublic): User {
   };
 }
 
-export function mapApiCommunity(
-  api: ApiCommunity,
-  isJoined = false,
-): Community {
+export function mapApiCommunity(api: ApiCommunity, isJoined?: boolean): Community {
+  const joined = isJoined ?? api.is_member ?? false;
   return {
     id: api.id,
     name: api.name,
     displayName: api.display_name,
     description: api.description ?? '',
     memberCount: api.member_count,
-    isJoined,
+    isJoined: joined,
     avatarUrl: api.icon_url ?? DEFAULT_COMMUNITY_AVATAR,
     bannerUrl: api.banner_url ?? DEFAULT_COMMUNITY_BANNER,
   };

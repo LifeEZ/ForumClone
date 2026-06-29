@@ -6,8 +6,9 @@ import { springBouncy } from '@/lib/motion';
 
 interface JoinCommunityButtonProps {
   children: React.ReactNode;
-  onClick: () => void;
+  onClick: () => void | Promise<void>;
   joined?: boolean;
+  disabled?: boolean;
   className?: string;
 }
 
@@ -15,21 +16,24 @@ export function JoinCommunityButton({
   children,
   onClick,
   joined = false,
+  disabled = false,
   className = '',
 }: JoinCommunityButtonProps) {
   const [glowKey, setGlowKey] = useState(0);
 
   const handleClick = () => {
+    if (disabled) return;
     if (!joined) {
       setGlowKey((key) => key + 1);
     }
-    onClick();
+    void onClick();
   };
 
   return (
     <motion.button
       type="button"
       onClick={handleClick}
+      disabled={disabled}
       whileHover={joined ? undefined : { scale: 1.02 }}
       whileTap={{ scale: 0.97 }}
       transition={springBouncy}

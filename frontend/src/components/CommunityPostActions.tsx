@@ -10,7 +10,8 @@ import { springBouncy } from '@/lib/motion';
 interface CommunityPostActionsProps {
   community: Community;
   user: User | null;
-  onJoin: () => void;
+  onJoin: () => void | Promise<void>;
+  joinLoading?: boolean;
   /** Full-width stacked layout for the mobile sticky bar. */
   compact?: boolean;
 }
@@ -19,6 +20,7 @@ export function CommunityPostActions({
   community,
   user,
   onJoin,
+  joinLoading = false,
   compact = false,
 }: CommunityPostActionsProps) {
   const layout = compact
@@ -27,7 +29,7 @@ export function CommunityPostActions({
   const actionClass = compact
     ? 'flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl font-semibold transition-colors'
     : 'flex items-center justify-center gap-2 px-6 py-2 rounded-xl font-semibold transition-colors';
-  const joinClass = `${actionClass} bg-forest-accent text-white hover:bg-forest-accent-hover shadow-lg shadow-forest-accent/15`;
+  const joinClass = `${actionClass} bg-forest-accent text-white hover:bg-forest-accent-hover shadow-lg shadow-forest-accent/15 disabled:opacity-60 disabled:cursor-not-allowed`;
 
   if (!user) {
     return (
@@ -38,8 +40,12 @@ export function CommunityPostActions({
         >
           Log in to post
         </Link>
-        <JoinCommunityButton onClick={onJoin} className={joinClass}>
-          Join community
+        <JoinCommunityButton
+          onClick={onJoin}
+          disabled={joinLoading}
+          className={joinClass}
+        >
+          {joinLoading ? 'Joining…' : 'Join community'}
         </JoinCommunityButton>
       </div>
     );
@@ -48,8 +54,12 @@ export function CommunityPostActions({
   if (!community.isJoined) {
     return (
       <div className={layout}>
-        <JoinCommunityButton onClick={onJoin} className={joinClass}>
-          Join to post
+        <JoinCommunityButton
+          onClick={onJoin}
+          disabled={joinLoading}
+          className={joinClass}
+        >
+          {joinLoading ? 'Joining…' : 'Join to post'}
         </JoinCommunityButton>
       </div>
     );
@@ -69,9 +79,10 @@ export function CommunityPostActions({
       <JoinCommunityButton
         onClick={onJoin}
         joined
-        className={`${actionClass} bg-forest-bg border border-forest-border/70 text-forest-text hover:bg-forest-surface-hover`}
+        disabled={joinLoading}
+        className={`${actionClass} bg-forest-bg border border-forest-border/70 text-forest-text hover:bg-forest-surface-hover disabled:opacity-60 disabled:cursor-not-allowed`}
       >
-        Joined
+        {joinLoading ? 'Leaving…' : 'Joined'}
       </JoinCommunityButton>
     </div>
   );
