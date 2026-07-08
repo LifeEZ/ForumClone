@@ -11,13 +11,10 @@ from contextlib import asynccontextmanager
 import httpx
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from hiver_routing import CONTENT_PREFIXES, IDENTITY_PREFIXES
 
 from app.config import settings
 from app.ratelimit import check_rate_limit, close_redis
-
-# First path segment (after /api/v1/) -> downstream service base URL.
-IDENTITY_PREFIXES = {"auth", "users", ".well-known"}
-CONTENT_PREFIXES = {"communities", "posts", "comments", "votes"}
 
 _HOP_BY_HOP = {
     "connection",
@@ -42,6 +39,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 def _target_base(first_segment: str) -> str | None:
+    # First path segment (after /api/v1/) -> downstream service base URL.
+    # The prefix sets come from the shared `hiver_routing` contract (Candidate E) so
+    # they can't drift from what each service actually serves.
     if first_segment in IDENTITY_PREFIXES:
         return settings.identity_url
     if first_segment in CONTENT_PREFIXES:

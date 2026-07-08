@@ -284,6 +284,7 @@ source = { editable = "." }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "hiver-auth-contract" },
+    { name = "hiver-routing" },
     { name = "httpx" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -303,6 +304,7 @@ dev = [
 requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.110.0" },
     { name = "hiver-auth-contract", editable = "../../packages/auth-contract" },
+    { name = "hiver-routing", editable = "../../packages/routing-contract" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10.0" },
     { name = "pydantic", specifier = ">=2.0.0" },
@@ -314,6 +316,11 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4.0" },
 ]
 provides-extras = ["dev"]
+
+[[package]]
+name = "hiver-routing"
+version = "0.1.0"
+source = { editable = "../../packages/routing-contract" }
 
 [[package]]
 name = "httpcore"

@@ -493,6 +493,7 @@ dependencies = [
     { name = "asyncpg" },
     { name = "fastapi", extra = ["standard"] },
     { name = "hiver-auth-contract" },
+    { name = "hiver-routing" },
     { name = "httpx" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -517,6 +518,7 @@ requires-dist = [
     { name = "asyncpg", specifier = ">=0.29.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.110.0" },
     { name = "hiver-auth-contract", editable = "../../packages/auth-contract" },
+    { name = "hiver-routing", editable = "../../packages/routing-contract" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10.0" },
@@ -529,6 +531,11 @@ requires-dist = [
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.0" },
 ]
 provides-extras = ["dev"]
+
+[[package]]
+name = "hiver-routing"
+version = "0.1.0"
+source = { editable = "../../packages/routing-contract" }
 
 [[package]]
 name = "httpcore"

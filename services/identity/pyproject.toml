@@ -14,10 +14,12 @@ dependencies = [
     "pyjwt[crypto]>=2.8.0",
     "bcrypt>=4.0.0",
     "hiver-auth-contract>=0.1.0",
+    "hiver-routing>=0.1.0",
 ]
 
 [tool.uv.sources]
 hiver-auth-contract = { path = "../../packages/auth-contract", editable = true }
+hiver-routing = { path = "../../packages/routing-contract", editable = true }
 
 [project.optional-dependencies]
 dev = [
