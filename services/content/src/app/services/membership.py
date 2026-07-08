@@ -1,4 +1,4 @@
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,6 +31,33 @@ async def is_member(session: AsyncSession, user_id: str, community_id: str) -> b
     return result.scalar_one_or_none() is not None
 
 
+async def count_members(session: AsyncSession, community_id: str) -> int:
+    """Live member count for one community — the number of membership rows.
+
+    `member_count` is no longer a stored column; it is derived from the rows so it can
+    never drift from them (Candidate D). This is the one place that knows the count is
+    `COUNT(community_memberships)`.
+    """
+    result = await session.execute(
+        select(func.count())
+        .select_from(CommunityMembership)
+        .where(CommunityMembership.community_id == community_id)
+    )
+    return int(result.scalar_one())
+
+
+async def count_members_for(session: AsyncSession, community_ids: list[str]) -> dict[str, int]:
+    """Batched live member counts — one query for many communities (no N+1 on lists)."""
+    if not community_ids:
+        return {}
+    result = await session.execute(
+        select(CommunityMembership.community_id, func.count())
+        .where(CommunityMembership.community_id.in_(community_ids))
+        .group_by(CommunityMembership.community_id)
+    )
+    return {str(cid): int(cnt) for cid, cnt in result.all()}
+
+
 async def join_community(session: AsyncSession, name: str, user: CurrentUser) -> Community:
     community = await get_community_by_name(session, name)
     if await is_member(session, user.id, community.id):
@@ -49,13 +76,6 @@ async def join_community(session: AsyncSession, name: str, user: CurrentUser) ->
         await session.rollback()
         raise AlreadyMemberError(name) from exc
 
-    await session.execute(
-        update(Community)
-        .where(Community.id == community.id)
-        .values(member_count=Community.member_count + 1)
-    )
-    await session.flush()
-    await session.refresh(community)
     return community
 
 
@@ -70,13 +90,7 @@ async def leave_community(session: AsyncSession, name: str, user: CurrentUser) -
             CommunityMembership.community_id == community.id,
         )
     )
-    await session.execute(
-        update(Community)
-        .where(Community.id == community.id)
-        .values(member_count=Community.member_count - 1)
-    )
     await session.flush()
-    await session.refresh(community)
     return community
 
 

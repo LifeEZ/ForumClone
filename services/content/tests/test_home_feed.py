@@ -16,14 +16,12 @@ async def _seed_two_communities_with_posts(session: AsyncSession) -> tuple[Commu
         name="joined",
         display_name="Joined",
         creator_id="seed",
-        member_count=1,
     )
     other = Community(
         id="c-other",
         name="other",
         display_name="Other",
         creator_id="seed",
-        member_count=1,
     )
     session.add_all([joined, other])
     await session.flush()

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
-from sqlalchemy import JSON, Integer, String, Text
+from sqlalchemy import JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base, utc_now
@@ -24,7 +24,6 @@ class Community(Base):
     banner_url: Mapped[str | None] = mapped_column(String(500), default=None)
     # Cross-service reference to identity user — plain id, NOT a foreign key.
     creator_id: Mapped[str] = mapped_column(String(36), nullable=False)
-    member_count: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(default=utc_now)
 
     memberships: Mapped[list["CommunityMembership"]] = relationship(back_populates="community")

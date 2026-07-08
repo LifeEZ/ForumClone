@@ -3,20 +3,32 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.community import Community
+from app.models.membership import CommunityMembership
 
 pytestmark = pytest.mark.anyio
 
 
 async def _seed_community(session: AsyncSession) -> Community:
+    """A community whose creator is already a member, so the live count starts at 1.
+
+    member_count is derived from membership rows (Candidate D), so seeding the creator
+    membership is what makes the community show "1 member" — the column no longer exists.
+    """
     community = Community(
         id="c-test",
         name="testcomm",
         display_name="Test Community",
         description="For membership tests",
         creator_id="seed-creator",
-        member_count=1,
     )
     session.add(community)
+    session.add(
+        CommunityMembership(
+            user_id="seed-creator",
+            community_id="c-test",
+            role="member",
+        )
+    )
     await session.commit()
     return community
 
@@ -133,14 +145,12 @@ async def test_list_joined_communities(
         name="alpha",
         display_name="Alpha",
         creator_id="seed",
-        member_count=1,
     )
     community_b = Community(
         id="c-b",
         name="beta",
         display_name="Beta",
         creator_id="seed",
-        member_count=1,
     )
     session.add_all([community_a, community_b])
     await session.commit()

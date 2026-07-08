@@ -1,7 +1,10 @@
-from sqlalchemy import select
+from dataclasses import dataclass
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.community import Community
+from app.models.membership import CommunityMembership
 
 
 class CommunityNotFoundError(Exception):
@@ -10,19 +13,41 @@ class CommunityNotFoundError(Exception):
         super().__init__(f"Community '{name}' not found")
 
 
+@dataclass(frozen=True)
+class CommunityWithCount:
+    """A community paired with its live member count (Candidate D).
+
+    `list_communities` orders by popularity, so it needs the count in the same query —
+    this pairs the row with its `COUNT(community_memberships)` from a single aggregate
+    instead of a stored column.
+    """
+
+    community: Community
+    member_count: int
+
+
 async def list_communities(
     session: AsyncSession,
     *,
     offset: int = 0,
     limit: int = 50,
-) -> list[Community]:
+) -> list[CommunityWithCount]:
+    member_count = func.count(CommunityMembership.user_id).label("member_count")
     result = await session.execute(
-        select(Community)
-        .order_by(Community.member_count.desc(), Community.name)
+        select(Community, member_count)
+        .outerjoin(
+            CommunityMembership,
+            CommunityMembership.community_id == Community.id,
+        )
+        .group_by(Community.id)
+        .order_by(member_count.desc(), Community.name)
         .offset(offset)
         .limit(limit)
     )
-    return list(result.scalars().all())
+    return [
+        CommunityWithCount(community=community, member_count=int(count))
+        for community, count in result.all()
+    ]
 
 
 async def get_community_by_name(session: AsyncSession, name: str) -> Community:

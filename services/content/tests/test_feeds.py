@@ -15,7 +15,6 @@ async def _seed_feed_data(session: AsyncSession) -> tuple[Community, Post]:
         display_name="Test Community",
         description="For feed tests",
         creator_id="test-author",
-        member_count=1,
     )
     post = Post(
         id="test-post",

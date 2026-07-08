@@ -31,7 +31,6 @@ SEED_COMMUNITIES = [
         "name": "films",
         "display_name": "Films",
         "description": "Discuss movies, directors, and everything on screen.",
-        "member_count": 14200,
         "icon_url": "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=150&q=80",
         "banner_url": "https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80",
         "creator_id": "u-seed-cinema",
@@ -41,7 +40,6 @@ SEED_COMMUNITIES = [
         "name": "music",
         "display_name": "Music",
         "description": "Albums, artists, genres, and live shows.",
-        "member_count": 85000,
         "icon_url": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=150&q=80",
         "banner_url": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80",
         "creator_id": "u-seed-vinyl",
@@ -51,7 +49,6 @@ SEED_COMMUNITIES = [
         "name": "webdev",
         "display_name": "Web Dev",
         "description": "Frontend, backend, and shipping things on the web.",
-        "member_count": 32400,
         "icon_url": "https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=150&q=80",
         "banner_url": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80",
         "creator_id": "u-seed-css",
@@ -205,7 +202,6 @@ async def seed() -> None:
                     icon_url=community_data["icon_url"],
                     banner_url=community_data["banner_url"],
                     creator_id=community_data["creator_id"],
-                    member_count=community_data["member_count"],
                     created_at=_created_at(60),
                 )
             )
