@@ -17,11 +17,12 @@ from app.models.post import Post
 
 SEED_MARKER_COMMUNITY = "films"
 
-# Snapshot of identity seed users (id -> username/karma), mirrored here on purpose.
+# Snapshot of identity seed usernames, mirrored here on purpose. Karma is not
+# snapshotted — see app.schemas.user.AuthorResponse.
 SEED_AUTHORS = {
-    "u-seed-cinema": {"username": "cinema_fan", "karma": 128},
-    "u-seed-vinyl": {"username": "vinyl_head", "karma": 890},
-    "u-seed-css": {"username": "css_wizard", "karma": 456},
+    "u-seed-cinema": "cinema_fan",
+    "u-seed-vinyl": "vinyl_head",
+    "u-seed-css": "css_wizard",
 }
 
 SEED_COMMUNITIES = [
@@ -110,14 +111,13 @@ async def seed() -> None:
             )
 
         for raw_post in SEED_POSTS:
-            author = SEED_AUTHORS[raw_post["author_id"]]
+            author_username = SEED_AUTHORS[raw_post["author_id"]]
             session.add(
                 Post(
                     id=raw_post["id"],
                     community_id=raw_post["community_id"],
                     author_id=raw_post["author_id"],
-                    author_username=author["username"],
-                    author_karma=author["karma"],
+                    author_username=author_username,
                     title=raw_post["title"],
                     content=raw_post["content"],
                     score=raw_post["score"],

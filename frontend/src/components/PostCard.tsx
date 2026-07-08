@@ -97,12 +97,6 @@ export function PostCard({
         )}
         <span className="text-forest-muted">
           {post.author.username}
-          {post.author.karma != null && (
-            <span className="text-forest-muted/80">
-              {' '}
-              · {post.author.karma} karma
-            </span>
-          )}
         </span>
         <span className="text-forest-muted">•</span>
         <span className="text-forest-muted">

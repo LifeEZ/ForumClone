@@ -22,7 +22,6 @@ class Comment(Base):
     # Denormalized author snapshot, copied from JWT claims at write time (ADR-0002).
     author_username: Mapped[str] = mapped_column(String(50), nullable=False)
     author_avatar_url: Mapped[str | None] = mapped_column(String(500), default=None)
-    author_karma: Mapped[int] = mapped_column(Integer, default=0)
     parent_id: Mapped[str | None] = mapped_column(ForeignKey("comments.id"), default=None)
     depth: Mapped[int] = mapped_column(Integer, default=0)
     score: Mapped[int] = mapped_column(Integer, default=0)

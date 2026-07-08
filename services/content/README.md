@@ -2,8 +2,10 @@
 
 Owns communities, memberships, posts, comments, and votes. Has **no users table** —
 it stores cross-service user references as plain ids plus a denormalized author
-snapshot (`author_username`, `author_avatar_url`, `author_karma`) copied from JWT
-claims at write time. Tokens are verified with Identity's public key (no DB lookup).
+snapshot (`author_username`, `author_avatar_url`) copied from JWT claims at write
+time. Karma is not snapshotted (per-user, changes every vote — shown only on the
+author's own profile via Identity). Tokens are verified with Identity's public key
+(no DB lookup).
 
 ## Endpoints
 

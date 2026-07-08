@@ -70,7 +70,6 @@ class PostFeedItem(BaseModel):
             display_name=post.author_username,
             bio=None,
             avatar_url=post.author_avatar_url,
-            karma=post.author_karma,
             created_at=post.created_at,
         )
         return cls(

@@ -24,7 +24,6 @@ async def _seed_feed_data(session: AsyncSession) -> tuple[Community, Post]:
         community_id=community.id,
         author_id="test-author",
         author_username="feed_author",
-        author_karma=10,
         score=5,
         comment_count=0,
     )
@@ -45,7 +44,7 @@ async def test_list_global_posts(client: AsyncClient, session: AsyncSession) -> 
     assert item["title"] == "Hello feed"
     assert item["community_id"] == community.id
     assert item["author"]["username"] == "feed_author"
-    assert item["author"]["karma"] == 10
+    assert "karma" not in item["author"]
     assert item["upvotes"] == 5
     assert item["downvotes"] == 0
     assert item["user_vote"] == 0

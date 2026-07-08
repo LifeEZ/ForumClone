@@ -88,14 +88,6 @@ export function CommentThread({
             <span className="font-semibold text-forest-text">
               {comment.author.username}
             </span>
-            {comment.author.karma != null && (
-              <>
-                <span className="text-forest-muted">•</span>
-                <span className="text-forest-muted">
-                  {comment.author.karma} karma
-                </span>
-              </>
-            )}
             <span className="text-forest-muted">•</span>
             <span className="text-forest-muted">
               <RelativeTime date={comment.createdAt} /> ago

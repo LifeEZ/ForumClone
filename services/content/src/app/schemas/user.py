@@ -8,6 +8,9 @@ class AuthorResponse(BaseModel):
 
     Mirrors identity's UserPublicResponse so the frontend contract is unchanged, but
     the data comes from the snapshot (ADR-0002) — no call into the Identity service.
+    Karma is deliberately not snapshotted: it is per-user and changes with every vote,
+    so a write-time snapshot would be wrong almost immediately. Karma is shown only on
+    the user's own profile (served by Identity), not on posts/comments.
     """
 
     id: str
@@ -15,5 +18,4 @@ class AuthorResponse(BaseModel):
     display_name: str | None
     bio: str | None
     avatar_url: str | None
-    karma: int
     created_at: datetime

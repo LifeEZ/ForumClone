@@ -27,7 +27,6 @@ class Post(Base):
     # Denormalized author snapshot, copied from JWT claims at write time (ADR-0002).
     author_username: Mapped[str] = mapped_column(String(50), nullable=False)
     author_avatar_url: Mapped[str | None] = mapped_column(String(500), default=None)
-    author_karma: Mapped[int] = mapped_column(Integer, default=0)
     score: Mapped[int] = mapped_column(Integer, default=0)
     comment_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(default=utc_now)

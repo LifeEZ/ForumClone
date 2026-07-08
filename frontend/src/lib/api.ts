@@ -142,7 +142,6 @@ export interface ApiUserPublic {
   display_name: string | null;
   bio: string | null;
   avatar_url: string | null;
-  karma: number;
   created_at: string;
 }
 

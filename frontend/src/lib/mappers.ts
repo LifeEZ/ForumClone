@@ -14,7 +14,6 @@ export function mapApiUserPublic(api: ApiUserPublic): User {
     id: api.id,
     username: api.username,
     avatarUrl: api.avatar_url,
-    karma: api.karma,
   };
 }
 
