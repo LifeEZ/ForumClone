@@ -34,7 +34,7 @@ graph TD
 | Service | Owns | Notes |
 |---------|------|-------|
 | **Gateway** | Routing, CORS, JWT verify, rate limiting | Single public entry; frontend base URL unchanged |
-| **Identity** | `users`, `refresh_tokens`, `karma` | Issues **RS256** JWTs (`sub` + `username` claims); exposes public-key/JWKS |
+| **Identity** | `users`, `refresh_tokens`, `karma` | Issues **RS256** JWTs (`sub` + `username` claims, `kid` header); exposes JWKS |
 | **Content** | `communities`, `memberships`, `posts`, `comments`, `votes` | Trusts JWT claims; no live call to Identity on the hot path |
 
 **Cross-service rules**

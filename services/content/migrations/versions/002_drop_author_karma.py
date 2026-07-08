@@ -29,5 +29,9 @@ def upgrade() -> None:
 def downgrade() -> None:
     import sqlalchemy as sa
 
-    op.add_column("comments", sa.Column("author_karma", sa.Integer(), nullable=False, server_default="0"))
-    op.add_column("posts", sa.Column("author_karma", sa.Integer(), nullable=False, server_default="0"))
+    op.add_column(
+        "comments", sa.Column("author_karma", sa.Integer(), nullable=False, server_default="0")
+    )
+    op.add_column(
+        "posts", sa.Column("author_karma", sa.Integer(), nullable=False, server_default="0")
+    )

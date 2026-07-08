@@ -13,8 +13,18 @@ from app.models.user import User
 from app.services.auth import hash_password
 
 SEED_USERS = [
-    {"id": "u-seed-cinema", "username": "cinema_fan", "email": "cinema_fan@seed.hiver", "karma": 128},
-    {"id": "u-seed-vinyl", "username": "vinyl_head", "email": "vinyl_head@seed.hiver", "karma": 890},
+    {
+        "id": "u-seed-cinema",
+        "username": "cinema_fan",
+        "email": "cinema_fan@seed.hiver",
+        "karma": 128,
+    },
+    {
+        "id": "u-seed-vinyl",
+        "username": "vinyl_head",
+        "email": "vinyl_head@seed.hiver",
+        "karma": 890,
+    },
     {"id": "u-seed-css", "username": "css_wizard", "email": "css_wizard@seed.hiver", "karma": 456},
 ]
 

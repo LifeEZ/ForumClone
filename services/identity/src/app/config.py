@@ -9,9 +9,7 @@ class Settings(BaseSettings):
     )
 
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/identity_db"
-    test_database_url: str = (
-        "postgresql+asyncpg://postgres:postgres@localhost:5433/identity_test"
-    )
+    test_database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5433/identity_test"
 
     # RS256 keypair (PEM). Leave blank in local dev to auto-generate an ephemeral pair.
     jwt_private_key_pem: str = ""

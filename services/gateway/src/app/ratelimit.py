@@ -8,6 +8,7 @@ configured the limiter is a no-op — local dev stays friction-free (ADR-0002).
 from __future__ import annotations
 
 import jwt
+from hiver_auth_contract import CLAIM_SUB
 from redis.asyncio import Redis
 
 from app.config import settings
@@ -28,7 +29,7 @@ def _client_key(authorization: str | None, client_ip: str) -> str:
     if authorization and authorization.lower().startswith("bearer "):
         token = authorization[7:]
         try:
-            sub = jwt.decode(token, options={"verify_signature": False}).get("sub")
+            sub = jwt.decode(token, options={"verify_signature": False}).get(CLAIM_SUB)
             if sub:
                 return f"rl:user:{sub}"
         except jwt.PyJWTError:

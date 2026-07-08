@@ -8,7 +8,7 @@ can verify tokens without calling back.
 
 - `POST /api/v1/auth/register|login|refresh|logout`
 - `GET  /api/v1/users/me`, `GET /api/v1/users/{id}`
-- `GET  /api/v1/.well-known/jwks.json`, `GET /api/v1/auth/public-key`
+- `GET  /api/v1/.well-known/jwks.json`
 
 ## Local dev
 

@@ -3,6 +3,16 @@ from datetime import UTC, datetime, timedelta
 
 import bcrypt
 import jwt
+from hiver_auth_contract import (
+    ACCESS_TOKEN_TYPE,
+    ALGORITHM,
+    CLAIM_AVATAR_URL,
+    CLAIM_SUB,
+    CLAIM_TYPE,
+    CLAIM_USERNAME,
+    TokenInvalidError,
+    claims_from_payload,
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,13 +22,6 @@ from app.models.user import User
 from app.schemas.auth import RegisterRequest, TokenResponse
 from app.security import private_key_pem, public_key_pem
 from app.services.user import create_user, get_user_by_id, get_user_by_username
-
-ACCESS_TOKEN_TYPE = "access"
-ALGORITHM = "RS256"
-
-
-class TokenInvalidError(Exception):
-    pass
 
 
 class UserNotFoundError(Exception):
@@ -43,11 +46,11 @@ def create_access_token(user: User) -> str:
     """Sign an RS256 access token. Embeds `username` so other services need no DB lookup."""
     expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
     payload = {
-        "sub": user.id,
-        "username": user.username,
-        "avatar_url": user.avatar_url,
+        CLAIM_SUB: user.id,
+        CLAIM_USERNAME: user.username,
+        CLAIM_AVATAR_URL: user.avatar_url,
         "exp": expire,
-        "type": ACCESS_TOKEN_TYPE,
+        CLAIM_TYPE: ACCESS_TOKEN_TYPE,
     }
     return jwt.encode(
         payload,
@@ -63,14 +66,7 @@ def decode_access_token(token: str) -> str:
     except jwt.PyJWTError as exc:
         raise TokenInvalidError("Invalid or expired access token") from exc
 
-    if payload.get("type") != ACCESS_TOKEN_TYPE:
-        raise TokenInvalidError("Invalid token type")
-
-    user_id = payload.get("sub")
-    if not isinstance(user_id, str) or not user_id:
-        raise TokenInvalidError("Invalid token subject")
-
-    return user_id
+    return claims_from_payload(payload).sub
 
 
 async def _create_refresh_token(session: AsyncSession, user_id: str) -> str:

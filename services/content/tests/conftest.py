@@ -6,6 +6,13 @@ import pytest
 import pytest_asyncio
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from hiver_auth_contract import (
+    ACCESS_TOKEN_TYPE,
+    ALGORITHM,
+    CLAIM_SUB,
+    CLAIM_TYPE,
+    CLAIM_USERNAME,
+)
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -14,14 +21,13 @@ import app.models.community  # noqa: F401
 import app.models.membership  # noqa: F401
 import app.models.post  # noqa: F401
 import app.models.vote  # noqa: F401
-from app.auth import set_public_key_for_testing
 from app.database import Base
 from app.dependencies import get_session
+from app.keyresolver import KeyResolver, set_resolver_for_testing
 from app.main import create_app
 
 TEST_DB_URL = "sqlite+aiosqlite:///./test.db"
-ALGORITHM = "RS256"
-ACCESS_TOKEN_TYPE = "access"
+TEST_KID = "hiver-identity-key"
 
 
 @pytest.fixture(scope="session")
@@ -32,17 +38,22 @@ def test_keypair() -> tuple[str, str]:
         format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption(),
     ).decode()
-    public_pem = private_key.public_key().public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo,
-    ).decode()
+    public_pem = (
+        private_key.public_key()
+        .public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+        .decode()
+    )
     return private_pem, public_pem
 
 
 @pytest.fixture(scope="session", autouse=True)
 def _install_test_public_key(test_keypair: tuple[str, str]) -> None:
     _, public_pem = test_keypair
-    set_public_key_for_testing(public_pem)
+    public_key = serialization.load_pem_public_key(public_pem.encode())
+    set_resolver_for_testing(KeyResolver.for_keys({TEST_KID: public_key}))
 
 
 def _mint_access_token(
@@ -53,12 +64,12 @@ def _mint_access_token(
 ) -> str:
     expire = datetime.now(UTC) + timedelta(minutes=15)
     payload = {
-        "sub": sub,
-        "username": username,
+        CLAIM_SUB: sub,
+        CLAIM_USERNAME: username,
         "exp": expire,
-        "type": ACCESS_TOKEN_TYPE,
+        CLAIM_TYPE: ACCESS_TOKEN_TYPE,
     }
-    return jwt.encode(payload, private_pem, algorithm=ALGORITHM)
+    return jwt.encode(payload, private_pem, algorithm=ALGORITHM, headers={"kid": TEST_KID})
 
 
 @pytest.fixture

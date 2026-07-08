@@ -59,18 +59,126 @@ SEED_COMMUNITIES = [
 ]
 
 SEED_POSTS = [
-    {"id": "p1", "community_id": "c1", "author_id": "u-seed-cinema", "title": "Stop using pure black for dark mode backgrounds", "content": "Pure black (#000000) causes eye strain because of extreme contrast with white text. Use a tinted dark color instead — like a dark forest green — for a softer, more readable UI.", "score": 330, "comment_count": 45, "days_ago": 3},
-    {"id": "p-films-2", "community_id": "c1", "author_id": "u-seed-cinema", "title": "Denis Villeneuve's use of silence in Dune", "content": "The pauses between dialogue hit harder than the score. What other directors do this well?", "score": 210, "comment_count": 18, "days_ago": 5},
-    {"id": "p-films-3", "community_id": "c1", "author_id": "u-seed-vinyl", "title": "Comfort rewatches that never get old", "content": "Mine is The Grand Budapest Hotel. Perfect palette, perfect pacing.", "score": 156, "comment_count": 62, "days_ago": 7},
-    {"id": "p-films-4", "community_id": "c1", "author_id": "u-seed-css", "title": "Letterboxd vs IMDb for logging films", "content": "Letterboxd wins on community vibes. IMDb still has better metadata. Where do you log?", "score": 89, "comment_count": 11, "days_ago": 9},
-    {"id": "p2", "community_id": "c2", "author_id": "u-seed-vinyl", "title": "Albums that sound better on vinyl", "content": "Some mixes are mastered differently for vinyl. What records do you think benefit most from the format?", "score": 845, "comment_count": 128, "days_ago": 3},
-    {"id": "p-music-2", "community_id": "c2", "author_id": "u-seed-cinema", "title": "Best live albums of the last decade", "content": "Khruangbin's live sets are unmatched. What are your picks?", "score": 412, "comment_count": 74, "days_ago": 4},
-    {"id": "p-music-3", "community_id": "c2", "author_id": "u-seed-css", "title": "DAW workflow tips for faster demos", "content": "Templates and bus routing saved me hours. Share your speed hacks.", "score": 198, "comment_count": 33, "days_ago": 6},
-    {"id": "p-music-4", "community_id": "c2", "author_id": "u-seed-vinyl", "title": "Genres that clicked for you late", "content": "Jazz took until my 30s. Now I can't stop.", "score": 267, "comment_count": 41, "days_ago": 8},
-    {"id": "p3", "community_id": "c3", "author_id": "u-seed-css", "title": "Container queries changed how I write responsive components", "content": "Component-level breakpoints beat viewport-only media queries for reusable UI. Worth learning if you have not tried them yet.", "score": 1197, "comment_count": 32, "days_ago": 4},
-    {"id": "p-webdev-2", "community_id": "c3", "author_id": "u-seed-cinema", "title": "When to reach for TanStack Query vs plain fetch", "content": "Caching and retries matter once you have mutations. For read-only pages fetch is fine.", "score": 534, "comment_count": 56, "days_ago": 5},
-    {"id": "p-webdev-3", "community_id": "c3", "author_id": "u-seed-vinyl", "title": "FastAPI + SQLAlchemy async patterns that scale", "content": "Thin routes, service layer, explicit session per request. Keep it boring.", "score": 388, "comment_count": 27, "days_ago": 7},
-    {"id": "p-webdev-4", "community_id": "c3", "author_id": "u-seed-css", "title": "Tailwind v4 migration notes", "content": "CSS-first config is growing on me. Anyone else moved a production app yet?", "score": 145, "comment_count": 19, "days_ago": 10},
+    {
+        "id": "p1",
+        "community_id": "c1",
+        "author_id": "u-seed-cinema",
+        "title": "Stop using pure black for dark mode backgrounds",
+        "content": "Pure black (#000000) causes eye strain because of extreme contrast with white text. Use a tinted dark color instead — like a dark forest green — for a softer, more readable UI.",
+        "score": 330,
+        "comment_count": 45,
+        "days_ago": 3,
+    },
+    {
+        "id": "p-films-2",
+        "community_id": "c1",
+        "author_id": "u-seed-cinema",
+        "title": "Denis Villeneuve's use of silence in Dune",
+        "content": "The pauses between dialogue hit harder than the score. What other directors do this well?",
+        "score": 210,
+        "comment_count": 18,
+        "days_ago": 5,
+    },
+    {
+        "id": "p-films-3",
+        "community_id": "c1",
+        "author_id": "u-seed-vinyl",
+        "title": "Comfort rewatches that never get old",
+        "content": "Mine is The Grand Budapest Hotel. Perfect palette, perfect pacing.",
+        "score": 156,
+        "comment_count": 62,
+        "days_ago": 7,
+    },
+    {
+        "id": "p-films-4",
+        "community_id": "c1",
+        "author_id": "u-seed-css",
+        "title": "Letterboxd vs IMDb for logging films",
+        "content": "Letterboxd wins on community vibes. IMDb still has better metadata. Where do you log?",
+        "score": 89,
+        "comment_count": 11,
+        "days_ago": 9,
+    },
+    {
+        "id": "p2",
+        "community_id": "c2",
+        "author_id": "u-seed-vinyl",
+        "title": "Albums that sound better on vinyl",
+        "content": "Some mixes are mastered differently for vinyl. What records do you think benefit most from the format?",
+        "score": 845,
+        "comment_count": 128,
+        "days_ago": 3,
+    },
+    {
+        "id": "p-music-2",
+        "community_id": "c2",
+        "author_id": "u-seed-cinema",
+        "title": "Best live albums of the last decade",
+        "content": "Khruangbin's live sets are unmatched. What are your picks?",
+        "score": 412,
+        "comment_count": 74,
+        "days_ago": 4,
+    },
+    {
+        "id": "p-music-3",
+        "community_id": "c2",
+        "author_id": "u-seed-css",
+        "title": "DAW workflow tips for faster demos",
+        "content": "Templates and bus routing saved me hours. Share your speed hacks.",
+        "score": 198,
+        "comment_count": 33,
+        "days_ago": 6,
+    },
+    {
+        "id": "p-music-4",
+        "community_id": "c2",
+        "author_id": "u-seed-vinyl",
+        "title": "Genres that clicked for you late",
+        "content": "Jazz took until my 30s. Now I can't stop.",
+        "score": 267,
+        "comment_count": 41,
+        "days_ago": 8,
+    },
+    {
+        "id": "p3",
+        "community_id": "c3",
+        "author_id": "u-seed-css",
+        "title": "Container queries changed how I write responsive components",
+        "content": "Component-level breakpoints beat viewport-only media queries for reusable UI. Worth learning if you have not tried them yet.",
+        "score": 1197,
+        "comment_count": 32,
+        "days_ago": 4,
+    },
+    {
+        "id": "p-webdev-2",
+        "community_id": "c3",
+        "author_id": "u-seed-cinema",
+        "title": "When to reach for TanStack Query vs plain fetch",
+        "content": "Caching and retries matter once you have mutations. For read-only pages fetch is fine.",
+        "score": 534,
+        "comment_count": 56,
+        "days_ago": 5,
+    },
+    {
+        "id": "p-webdev-3",
+        "community_id": "c3",
+        "author_id": "u-seed-vinyl",
+        "title": "FastAPI + SQLAlchemy async patterns that scale",
+        "content": "Thin routes, service layer, explicit session per request. Keep it boring.",
+        "score": 388,
+        "comment_count": 27,
+        "days_ago": 7,
+    },
+    {
+        "id": "p-webdev-4",
+        "community_id": "c3",
+        "author_id": "u-seed-css",
+        "title": "Tailwind v4 migration notes",
+        "content": "CSS-first config is growing on me. Anyone else moved a production app yet?",
+        "score": 145,
+        "comment_count": 19,
+        "days_ago": 10,
+    },
 ]
 
 
@@ -128,7 +236,9 @@ async def seed() -> None:
             )
 
         await session.commit()
-        print(f"Seeded {len(SEED_COMMUNITIES)} communities and {len(SEED_POSTS)} posts into content_db.")
+        print(
+            f"Seeded {len(SEED_COMMUNITIES)} communities and {len(SEED_POSTS)} posts into content_db."
+        )
 
 
 def main() -> None:

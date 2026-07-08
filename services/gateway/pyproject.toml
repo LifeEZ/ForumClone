@@ -11,7 +11,11 @@ dependencies = [
     "pydantic-settings>=2.0.0",
     "pyjwt>=2.8.0",
     "redis>=5.0.0",
+    "hiver-auth-contract>=0.1.0",
 ]
+
+[tool.uv.sources]
+hiver-auth-contract = { path = "../../packages/auth-contract", editable = true }
 
 [project.optional-dependencies]
 dev = [

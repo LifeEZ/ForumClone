@@ -13,9 +13,7 @@ def anyio_backend() -> str:
 @pytest.mark.anyio
 async def test_health() -> None:
     app = create_app()
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         resp = await client.get("/health")
     assert resp.status_code == 200
     assert resp.json()["service"] == "gateway"
@@ -33,8 +31,6 @@ def test_routing_table() -> None:
 @pytest.mark.anyio
 async def test_unknown_prefix_returns_404() -> None:
     app = create_app()
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         resp = await client.get("/api/v1/nonsense/thing")
     assert resp.status_code == 404
