@@ -73,7 +73,6 @@ class KeyResolver:
         return self._keys_by_kid
 
     async def get_signing_key(self, token: str) -> object:
-        # Read the kid from the token header without verifying the signature.
         try:
             kid = jwt.get_unverified_header(token).get("kid")
         except jwt.PyJWTError as exc:
@@ -86,7 +85,6 @@ class KeyResolver:
         if key is not None:
             return key
 
-        # Unknown kid — the JWKS may have rotated and our cache is stale. Refetch once.
         await self._fetch()
         key = self._keys_by_kid.get(kid)
         if key is None:

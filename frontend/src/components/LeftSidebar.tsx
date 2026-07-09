@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home } from 'lucide-react';
+import { Home, Plus } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { RemoteImage } from '@/components/RemoteImage';
 
 export function LeftSidebar() {
-  const { communities } = useAppContext();
+  const { communities, user } = useAppContext();
   const pathname = usePathname() ?? '';
   const joinedCommunities = communities.filter((c) => c.isJoined);
 
@@ -25,6 +25,19 @@ export function LeftSidebar() {
           <Home className="w-5 h-5" />
           Home
         </Link>
+        {user && (
+          <Link
+            href="/create-community"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              pathname === '/create-community'
+                ? 'bg-forest-surface text-forest-text'
+                : 'text-forest-muted hover:bg-forest-surface hover:text-forest-text'
+            }`}
+          >
+            <Plus className="w-5 h-5" />
+            Create community
+          </Link>
+        )}
       </nav>
 
       <div className="mb-6">

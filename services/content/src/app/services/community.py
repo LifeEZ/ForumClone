@@ -1,10 +1,13 @@
 from dataclasses import dataclass
+from uuid import uuid4
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.community import Community
 from app.models.membership import CommunityMembership
+from app.schemas.community import CommunityCreate
 
 
 class CommunityNotFoundError(Exception):
@@ -13,15 +16,14 @@ class CommunityNotFoundError(Exception):
         super().__init__(f"Community '{name}' not found")
 
 
+class CommunityAlreadyExistsError(Exception):
+    def __init__(self, name: str) -> None:
+        self.name = name
+        super().__init__(f"Community '{name}' already exists")
+
+
 @dataclass(frozen=True)
 class CommunityWithCount:
-    """A community paired with its live member count (Candidate D).
-
-    `list_communities` orders by popularity, so it needs the count in the same query —
-    this pairs the row with its `COUNT(community_memberships)` from a single aggregate
-    instead of a stored column.
-    """
-
     community: Community
     member_count: int
 
@@ -55,4 +57,39 @@ async def get_community_by_name(session: AsyncSession, name: str) -> Community:
     community = result.scalar_one_or_none()
     if community is None:
         raise CommunityNotFoundError(name)
+    return community
+
+
+async def create_community(
+    session: AsyncSession,
+    data: CommunityCreate,
+    *,
+    creator_id: str,
+) -> Community:
+    """Insert a community and its creator membership in one unit of work.
+
+    The creator is auto-joined with role='creator'. Raises
+    `CommunityAlreadyExistsError` on a unique-name violation so the endpoint can
+    map it to 409 without leaking IntegrityError upward.
+    """
+    community = Community(
+        id=str(uuid4()),
+        name=data.name,
+        display_name=data.display_name,
+        description=data.description,
+        creator_id=creator_id,
+    )
+    session.add(community)
+    session.add(
+        CommunityMembership(
+            user_id=creator_id,
+            community_id=community.id,
+            role="creator",
+        )
+    )
+    try:
+        await session.flush()
+    except IntegrityError as exc:
+        await session.rollback()
+        raise CommunityAlreadyExistsError(data.name) from exc
     return community

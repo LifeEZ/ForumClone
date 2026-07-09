@@ -9,11 +9,6 @@ pytestmark = pytest.mark.anyio
 
 
 async def _seed_community(session: AsyncSession) -> Community:
-    """A community whose creator is already a member, so the live count starts at 1.
-
-    member_count is derived from membership rows (Candidate D), so seeding the creator
-    membership is what makes the community show "1 member" — the column no longer exists.
-    """
     community = Community(
         id="c-test",
         name="testcomm",

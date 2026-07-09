@@ -12,6 +12,10 @@ _Avoid_: Subreddit, forum, channel
 A user who has joined a community. Membership is required to post there; guests and non-members may still read public community pages.
 _Avoid_: Subscriber, follower
 
+**Creator**:
+The user who created a community. The creator is its first member and holds the `creator` role on their membership row, distinct from a plain `member`. Distinct from the seed authors that pre-load demo communities.
+_Avoid_: Owner, founder, admin
+
 **Post**:
 A piece of content submitted to a community — title plus optional body, link, or image.
 _Avoid_: Thread, submission

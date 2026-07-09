@@ -1,10 +1,36 @@
+import re
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 if TYPE_CHECKING:
     from app.models.community import Community
+
+
+# Extensible without a migration — new entries only affect future creates.
+RESERVED_SLUGS: frozenset[str] = frozenset(
+    {
+        "mine",
+        "api",
+        "admin",
+        "mod",
+        "all",
+        "popular",
+        "new",
+        "home",
+        "create-community",
+        "login",
+        "register",
+        "auth",
+        "users",
+        "posts",
+        "c",
+    }
+)
+
+# Lowercase alnum groups separated by single hyphens; no leading/trailing hyphen.
+_SLUG_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
 
 class CommunityCreate(BaseModel):
@@ -12,6 +38,24 @@ class CommunityCreate(BaseModel):
     display_name: str
     description: str | None = None
     rules: list[dict] | None = None
+
+    @field_validator("name")
+    @classmethod
+    def _validate_name(cls, value: str) -> str:
+        if len(value) < 3 or len(value) > 30:
+            raise ValueError("name must be 3–30 characters")
+        if not _SLUG_RE.fullmatch(value):
+            raise ValueError("name must be lowercase letters, digits, and single hyphens")
+        if value in RESERVED_SLUGS:
+            raise ValueError(f"'{value}' is a reserved name")
+        return value
+
+    @field_validator("display_name")
+    @classmethod
+    def _validate_display_name(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("display_name must not be empty")
+        return value
 
 
 class CommunityUpdate(BaseModel):
@@ -43,12 +87,6 @@ class CommunityResponse(BaseModel):
         member_count: int,
         is_member: bool | None = None,
     ) -> "CommunityResponse":
-        """Build a response from a Community row plus its derived member count.
-
-        `member_count` is no longer a column on `Community` (Candidate D); it is
-        computed from `community_memberships` and passed in. Constructing explicitly
-        avoids `from_attributes` reaching for a column that no longer exists.
-        """
         return cls(
             id=community.id,
             name=community.name,

@@ -40,7 +40,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 def _target_base(first_segment: str) -> str | None:
     # First path segment (after /api/v1/) -> downstream service base URL.
-    # The prefix sets come from the shared `hiver_routing` contract (Candidate E) so
+    # The prefix sets come from the shared `hiver_routing` contract so
     # they can't drift from what each service actually serves.
     if first_segment in IDENTITY_PREFIXES:
         return settings.identity_url

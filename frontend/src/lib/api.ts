@@ -56,8 +56,13 @@ export function clearStoredTokens(): void {
 
 async function parseError(resp: Response): Promise<string> {
   try {
-    const data = (await resp.json()) as { detail?: string };
+    const data = (await resp.json()) as
+      | { detail?: string | Array<{ msg?: string; message?: string }> };
     if (typeof data.detail === 'string') return data.detail;
+    if (Array.isArray(data.detail) && data.detail.length > 0) {
+      const first = data.detail[0];
+      return first?.msg ?? first?.message ?? resp.statusText;
+    }
   } catch {
     // ignore parse errors
   }
@@ -257,4 +262,18 @@ export async function leaveCommunity(
     { method: 'DELETE' },
     accessToken,
   );
+}
+
+export async function createCommunity(
+  accessToken: string,
+  payload: {
+    name: string;
+    display_name: string;
+    description?: string | null;
+  },
+): Promise<ApiCommunity> {
+  return request<ApiCommunity>('/communities', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }, accessToken);
 }

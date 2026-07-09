@@ -5,11 +5,11 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-import app.models.comment  # noqa: F401
-import app.models.community  # noqa: F401
-import app.models.membership  # noqa: F401
-import app.models.post  # noqa: F401
-import app.models.vote  # noqa: F401
+import app.models.comment
+import app.models.community
+import app.models.membership
+import app.models.post
+import app.models.vote
 from app.config import settings
 from app.database import Base
 
@@ -35,7 +35,7 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: object) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)  # type: ignore[arg-type]
+    context.configure(connection=connection, target_metadata=target_metadata)
     with context.begin_transaction():
         context.run_migrations()
 

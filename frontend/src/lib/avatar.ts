@@ -1,4 +1,4 @@
-/** Muted avatar palette — distinct hues, calm on dark UI. Order: green, orange, red, blue, purple. */
+/** Muted avatar palette */
 const AVATAR_COLORS = [
   '#3d7a5c', // green (sage)
   '#c47a3a', // orange (amber)

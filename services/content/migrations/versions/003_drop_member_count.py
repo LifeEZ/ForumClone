@@ -1,10 +1,7 @@
 """drop member_count from communities
 
 member_count is now derived from COUNT(community_memberships) at read time, so the
-hand-maintained counter and its +1/-1 updates on join/leave are gone. The truth is the
-membership rows; the count cannot drift from them (Candidate D, architecture review).
-Seeded communities now show their real count (1 — the creator membership) instead of a
-fake display number.
+hand-maintained counter and its +1/-1 updates on join/leave are gone.
 
 Revision ID: 003_drop_member_count
 Revises: 002_drop_author_karma

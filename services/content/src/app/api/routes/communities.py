@@ -1,10 +1,12 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.dependencies import CurrentUserDep, CurrentUserOptionalDep, SessionDep
-from app.schemas.community import CommunityResponse
+from app.schemas.community import CommunityCreate, CommunityResponse
 from app.schemas.post import PostFeedItem
 from app.services.community import (
+    CommunityAlreadyExistsError,
     CommunityNotFoundError,
+    create_community,
     get_community_by_name,
     list_communities,
 )
@@ -47,6 +49,24 @@ async def list_joined_communities_endpoint(
         CommunityResponse.from_community(c, member_count=counts.get(c.id, 0), is_member=True)
         for c in communities
     ]
+
+
+@router.post("", response_model=CommunityResponse, status_code=status.HTTP_201_CREATED)
+async def create_community_endpoint(
+    data: CommunityCreate,
+    session: SessionDep,
+    user: CurrentUserDep,
+) -> CommunityResponse:
+    try:
+        community = await create_community(session, data, creator_id=user.id)
+    except CommunityAlreadyExistsError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Community '{exc.name}' already exists",
+        ) from exc
+    response = CommunityResponse.from_community(community, member_count=1, is_member=True)
+    await session.commit()
+    return response
 
 
 @router.get("/{name}/posts", response_model=list[PostFeedItem])
