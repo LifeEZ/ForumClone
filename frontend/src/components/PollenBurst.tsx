@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const PARTICLE_COUNT = 8;
@@ -55,15 +55,14 @@ interface PollenBurstProps {
 }
 
 export function PollenBurst({ trigger }: PollenBurstProps) {
-  const [burst, setBurst] = useState<{
-    id: number;
-    particles: BurstParticle[];
-  } | null>(null);
-
-  useEffect(() => {
-    if (trigger > 0) {
-      setBurst({ id: trigger, particles: createBurstParticles(PARTICLE_COUNT) });
+  const burst = useMemo(() => {
+    if (trigger <= 0) {
+      return null;
     }
+    return {
+      id: trigger,
+      particles: createBurstParticles(PARTICLE_COUNT),
+    };
   }, [trigger]);
 
   if (!burst) {

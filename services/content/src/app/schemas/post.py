@@ -1,14 +1,15 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-
-POST_TITLE_MAX_LENGTH = 300
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.schemas.user import AuthorResponse
 
 if TYPE_CHECKING:
     from app.models.post import Post
+
+POST_TITLE_MAX_LENGTH = 300
+POST_CONTENT_MAX_LENGTH = 40_000
 
 
 def score_to_vote_counts(score: int) -> tuple[int, int]:
@@ -19,9 +20,8 @@ def score_to_vote_counts(score: int) -> tuple[int, int]:
 
 class PostCreate(BaseModel):
     title: str = Field(min_length=1, max_length=POST_TITLE_MAX_LENGTH)
-    community_id: str
     post_type: Literal["text", "link", "image"] = "text"
-    content: str | None = None
+    content: str | None = Field(default=None, max_length=POST_CONTENT_MAX_LENGTH)
     url: str | None = None
 
     @field_validator("title")
@@ -31,6 +31,16 @@ class PostCreate(BaseModel):
         if not stripped:
             raise ValueError("title must not be empty")
         return stripped
+
+    @model_validator(mode="after")
+    def _text_only_in_v1(self) -> "PostCreate":
+        # Link/image posts are deferred to v2. The schema shape stays broad so v2
+        # only needs to drop this guard.
+        if self.post_type != "text":
+            raise ValueError("only text posts are supported in v1")
+        if self.url is not None:
+            raise ValueError("url is not supported for text posts in v1")
+        return self
 
 
 class PostUpdate(BaseModel):

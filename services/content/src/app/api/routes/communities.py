@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from app.dependencies import CurrentUserDep, CurrentUserOptionalDep, SessionDep
 from app.schemas.community import CommunityCreate, CommunityResponse
-from app.schemas.post import PostFeedItem
+from app.schemas.post import PostCreate, PostFeedItem
 from app.services.community import (
     CommunityAlreadyExistsError,
     CommunityNotFoundError,
@@ -20,7 +20,11 @@ from app.services.membership import (
     leave_community,
     list_joined_communities,
 )
-from app.services.post import list_posts
+from app.services.post import (
+    MembershipRequiredError,
+    create_post,
+    list_posts,
+)
 
 router = APIRouter(prefix="/communities", tags=["communities"])
 
@@ -82,6 +86,26 @@ async def list_community_posts_endpoint(
         raise HTTPException(status_code=404, detail="Community not found") from None
     posts = await list_posts(session, community_id=community.id, offset=offset, limit=limit)
     return [PostFeedItem.from_post(post) for post in posts]
+
+
+@router.post("/{name}/posts", response_model=PostFeedItem, status_code=status.HTTP_201_CREATED)
+async def create_post_endpoint(
+    name: str,
+    data: PostCreate,
+    session: SessionDep,
+    user: CurrentUserDep,
+) -> PostFeedItem:
+    try:
+        post = await create_post(session, name, data, author=user)
+    except CommunityNotFoundError:
+        raise HTTPException(status_code=404, detail="Community not found") from None
+    except MembershipRequiredError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be a member of this community to post",
+        ) from None
+    await session.commit()
+    return PostFeedItem.from_post(post)
 
 
 @router.post("/{name}/join", response_model=CommunityResponse)

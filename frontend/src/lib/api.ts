@@ -303,3 +303,16 @@ export async function createCommunity(payload: {
     body: JSON.stringify(payload),
   });
 }
+
+export async function createPost(
+  communityName: string,
+  payload: { title: string; content?: string | null },
+): Promise<ApiPostFeedItem> {
+  return requestWithAuth<ApiPostFeedItem>(
+    `/communities/${encodeURIComponent(communityName)}/posts`,
+    {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    },
+  );
+}

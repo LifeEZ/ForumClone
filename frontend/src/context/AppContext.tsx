@@ -23,7 +23,6 @@ import { mapApiCommunity, mapAuthUser } from '@/lib/mappers';
 import { mockComments } from '@/data/mockData';
 
 interface AppContextType {
-  /** Shared communities cache for shell chrome (nav, sidebars). Page views fetch their own data. */
   communities: Community[];
   communitiesLoading: boolean;
   communitiesError: string | null;
@@ -133,12 +132,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       prev.map((c) =>
         c.id === communityId
           ? {
-              ...c,
-              isJoined: !wasJoined,
-              memberCount: wasJoined
-                ? c.memberCount - 1
-                : c.memberCount + 1,
-            }
+            ...c,
+            isJoined: !wasJoined,
+            memberCount: wasJoined
+              ? c.memberCount - 1
+              : c.memberCount + 1,
+          }
           : c,
       ),
     );
@@ -162,10 +161,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         prev.map((c) =>
           c.id === communityId
             ? {
-                ...c,
-                isJoined: wasJoined,
-                memberCount: previousMemberCount,
-              }
+              ...c,
+              isJoined: wasJoined,
+              memberCount: previousMemberCount,
+            }
             : c,
         ),
       );
