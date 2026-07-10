@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-import app.models  # noqa: F401  (register ORM models)
+import app.models  # noqa: F401
 from app.config import settings
 from app.database import engine
 

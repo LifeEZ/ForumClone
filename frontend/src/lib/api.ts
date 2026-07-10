@@ -85,6 +85,7 @@ async function request<T>(
   const resp = await fetch(`${API_BASE}/api/v1${path}`, {
     ...options,
     headers,
+    cache: 'no-store',
   });
 
   if (!resp.ok) {
