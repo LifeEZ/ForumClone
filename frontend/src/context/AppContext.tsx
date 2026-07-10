@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { Post, Community } from '@/types';
+import { Community } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
   ApiError,
@@ -30,19 +30,6 @@ interface AppContextType {
   user: ReturnType<typeof mapAuthUser> | null;
   refreshCommunities: () => Promise<void>;
   toggleJoinCommunity: (communityId: string) => Promise<void>;
-  votePost: (postId: string, vote: 1 | -1 | 0) => void;
-  addPost: (
-    post: Omit<
-      Post,
-      | 'id'
-      | 'createdAt'
-      | 'upvotes'
-      | 'downvotes'
-      | 'userVote'
-      | 'commentCount'
-      | 'author'
-    >,
-  ) => string;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -173,27 +160,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const votePost = (_postId: string, _vote: 1 | -1 | 0) => {
-    // Voting is handled in PostCard / PostDetailView via lib/api castVote.
-    // Kept as a no-op so the shell context shape stays stable.
-  };
-
-  const addPost = (
-    _postData: Omit<
-      Post,
-      | 'id'
-      | 'createdAt'
-      | 'upvotes'
-      | 'downvotes'
-      | 'userVote'
-      | 'commentCount'
-      | 'author'
-    >,
-  ) => {
-    if (!user) return '';
-    return `p_${Date.now()}`;
-  };
-
   return (
     <AppContext.Provider
       value={{
@@ -205,8 +171,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         user,
         refreshCommunities,
         toggleJoinCommunity,
-        votePost,
-        addPost,
       }}
     >
       {children}

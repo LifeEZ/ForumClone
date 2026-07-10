@@ -52,6 +52,8 @@ export function CommentThread({
   const [measuredSegments, setMeasuredSegments] = useState<
     { top: number; height: number }[]
   >([]);
+  const hasReplies = !!comment.replies && comment.replies.length > 0;
+  const drawLine = depth < MAX_VISUAL_DEPTH;
   const segments =
     !hasReplies || isCollapsed || !drawLine ? [] : measuredSegments;
   // Hovering any rail segment or elbow highlights the whole thread together.
@@ -67,8 +69,6 @@ export function CommentThread({
 
   const canReply = depth < MAX_REPLY_DEPTH && isLoggedIn;
   const canShowReply = depth < MAX_REPLY_DEPTH;
-  const hasReplies = !!comment.replies && comment.replies.length > 0;
-  const drawLine = depth < MAX_VISUAL_DEPTH;
 
   useLayoutEffect(() => {
     if (!hasReplies || isCollapsed || !drawLine) {

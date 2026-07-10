@@ -13,12 +13,11 @@ can verify tokens without calling back.
 ## Local dev
 
 ```bash
-pip install -e ".[dev]"
-export PYTHONPATH=src
-alembic upgrade head
-python -m app.seed        # optional demo users
-uvicorn app.main:app --port 8001
-pytest
+uv sync --extra dev
+uv run alembic upgrade head
+uv run python -m app.seed  # optional demo users
+uv run uvicorn app.main:app --app-dir src --reload --port 8001
+uv run pytest
 ```
 
 Leave `JWT_PRIVATE_KEY_PEM` / `JWT_PUBLIC_KEY_PEM` blank locally to auto-generate

@@ -26,7 +26,7 @@ import pytest
 
 from conftest import CONTENT_URL, IDENTITY_URL
 
-pytestmark = [pytest.mark.integration, pytest.mark.anyio]
+pytestmark = [pytest.mark.integration]
 
 PASSWORD = "integration-test-password"
 

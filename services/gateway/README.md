@@ -12,13 +12,12 @@ nothing about identity itself — each downstream service verifies the JWT.
 ## Local dev
 
 ```bash
-pip install -e ".[dev]"
-export PYTHONPATH=src
+uv sync --extra dev
 export IDENTITY_URL=http://localhost:8001
 export CONTENT_URL=http://localhost:8002
 # export REDIS_URL=redis://localhost:6379/0   # optional; blank disables rate limiting
-uvicorn app.main:app --port 8000
-pytest
+uv run uvicorn app.main:app --app-dir src --reload --port 8000
+uv run pytest
 ```
 
 The frontend points at this gateway (`NEXT_PUBLIC_API_URL`, default

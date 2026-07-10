@@ -70,7 +70,7 @@ Identity and content need a database and run their migrations with `uv run alemb
 
 ## Status
 
-Slices 1–7 are implemented: guest browsing, full auth, join/leave with personalized home feed, create-community, create text post, comments + replies, and votes with eventual karma (outbox relay from Content → Identity). Slice 8 (CI polish, seed, README) is next.
+Slices 1–8 are implemented: guest browsing, full auth, join/leave with personalized home feed, create-community, create text post, comments + replies, votes with eventual karma (outbox relay from Content → Identity), plus CI polish + per-service READMEs + AppContext stub cleanup. Slice 9 (deploy) is next.
 
 **Cross-service smoke test** (vote → score → karma relay):
 
