@@ -317,3 +317,34 @@ export async function createPost(
     },
   );
 }
+
+export interface ApiComment {
+  id: string;
+  content: string;
+  post_id: string;
+  author: ApiUserPublic;
+  parent_id: string | null;
+  depth: number;
+  score: number;
+  created_at: string;
+  is_deleted: boolean;
+  user_vote: number | null;
+  replies: ApiComment[];
+}
+
+export async function fetchComments(postId: string): Promise<ApiComment[]> {
+  return request<ApiComment[]>(`/posts/${encodeURIComponent(postId)}/comments`);
+}
+
+export async function createComment(
+  postId: string,
+  payload: { content: string; parent_id?: string | null },
+): Promise<ApiComment> {
+  return requestWithAuth<ApiComment>(
+    `/posts/${encodeURIComponent(postId)}/comments`,
+    {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    },
+  );
+}

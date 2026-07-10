@@ -1,7 +1,15 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.dependencies import CurrentUserDep, SessionDep
+from app.schemas.comment import CommentCreate, CommentResponse
 from app.schemas.post import PostFeedItem
+from app.services.comment import (
+    CommentParentMismatchError,
+    MaxCommentDepthError,
+    ParentCommentNotFoundError,
+    create_comment,
+    list_comments_for_post,
+)
 from app.services.membership import list_home_posts
 from app.services.post import PostNotFoundError, get_post, list_posts
 
@@ -36,3 +44,48 @@ async def get_post_endpoint(post_id: str, session: SessionDep) -> PostFeedItem:
     except PostNotFoundError:
         raise HTTPException(status_code=404, detail="Post not found") from None
     return PostFeedItem.from_post(post)
+
+
+@router.get("/{post_id}/comments", response_model=list[CommentResponse])
+async def list_post_comments_endpoint(
+    post_id: str,
+    session: SessionDep,
+) -> list[CommentResponse]:
+    try:
+        post = await get_post(session, post_id)
+    except PostNotFoundError:
+        raise HTTPException(status_code=404, detail="Post not found") from None
+    return await list_comments_for_post(session, post.id)
+
+
+@router.post(
+    "/{post_id}/comments",
+    response_model=CommentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_post_comment_endpoint(
+    post_id: str,
+    data: CommentCreate,
+    session: SessionDep,
+    user: CurrentUserDep,
+) -> CommentResponse:
+    try:
+        post = await get_post(session, post_id)
+    except PostNotFoundError:
+        raise HTTPException(status_code=404, detail="Post not found") from None
+    try:
+        comment = await create_comment(session, post, data, author=user)
+    except ParentCommentNotFoundError:
+        raise HTTPException(status_code=404, detail="Parent comment not found") from None
+    except CommentParentMismatchError:
+        raise HTTPException(
+            status_code=400,
+            detail="Parent comment does not belong to this post",
+        ) from None
+    except MaxCommentDepthError:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Maximum comment depth ({10}) reached",
+        ) from None
+    await session.commit()
+    return CommentResponse.from_comment(comment)

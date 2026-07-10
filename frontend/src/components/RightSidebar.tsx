@@ -26,21 +26,24 @@ export function RightSidebar({ communityId }: RightSidebarProps) {
           <h3 className="font-display text-sm font-semibold text-forest-muted uppercase tracking-wider mb-4">
             About community
           </h3>
-          <div className="flex items-center gap-3 mb-4">
+          <Link
+            href={`/c/${community.name}`}
+            className="flex items-center gap-3 mb-4 group"
+          >
             <RemoteImage
               src={community.avatarUrl}
               alt=""
               width={48}
               height={48}
-              className="w-12 h-12 rounded-full object-cover"
+              className="w-12 h-12 rounded-full object-cover ring-2 ring-transparent group-hover:ring-forest-accent/60 transition-all"
             />
             <div>
-              <h4 className="font-display font-semibold text-forest-text">
+              <h4 className="font-display font-semibold text-forest-text group-hover:text-forest-accent transition-colors">
                 {community.displayName}
               </h4>
               <p className="text-sm text-forest-muted">c/{community.name}</p>
             </div>
-          </div>
+          </Link>
           <p className="text-sm text-forest-text/90 mb-4">
             {community.description}
           </p>

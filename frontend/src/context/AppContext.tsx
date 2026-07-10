@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { Post, Community, Comment } from '@/types';
+import { Post, Community } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
   ApiError,
@@ -20,20 +20,16 @@ import {
   leaveCommunity,
 } from '@/lib/api';
 import { mapApiCommunity, mapAuthUser } from '@/lib/mappers';
-import { mockComments } from '@/data/mockData';
 
 interface AppContextType {
   communities: Community[];
   communitiesLoading: boolean;
   communitiesError: string | null;
   joinError: string | null;
-  /** Mock comment threads — replace with api.ts in slice 6. */
-  comments: Record<string, Comment[]>;
   user: ReturnType<typeof mapAuthUser> | null;
   refreshCommunities: () => Promise<void>;
   toggleJoinCommunity: (communityId: string) => Promise<void>;
   votePost: (postId: string, vote: 1 | -1 | 0) => void;
-  voteComment: (postId: string, commentId: string, vote: 1 | -1 | 0) => void;
   addPost: (
     post: Omit<
       Post,
@@ -46,11 +42,6 @@ interface AppContextType {
       | 'author'
     >,
   ) => string;
-  addComment: (
-    postId: string,
-    parentId: string | null,
-    content: string,
-  ) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -63,8 +54,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [communitiesLoading, setCommunitiesLoading] = useState(true);
   const [communitiesError, setCommunitiesError] = useState<string | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
-  const [comments, setComments] =
-    useState<Record<string, Comment[]>>(mockComments);
 
   const loadCommunities = useCallback(async () => {
     setCommunitiesLoading(true);
@@ -179,43 +168,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Wired in slice 7; per-view local state handles display until then.
   };
 
-  const voteCommentRecursive = (
-    commentList: Comment[],
-    commentId: string,
-    vote: 1 | -1 | 0,
-  ): Comment[] => {
-    return commentList.map((c) => {
-      if (c.id === commentId) {
-        let newUpvotes = c.upvotes;
-        let newDownvotes = c.downvotes;
-        if (c.userVote === 1) newUpvotes--;
-        if (c.userVote === -1) newDownvotes--;
-        if (vote === 1) newUpvotes++;
-        if (vote === -1) newDownvotes++;
-        return {
-          ...c,
-          upvotes: newUpvotes,
-          downvotes: newDownvotes,
-          userVote: vote,
-        };
-      }
-      if (c.replies) {
-        return {
-          ...c,
-          replies: voteCommentRecursive(c.replies, commentId, vote),
-        };
-      }
-      return c;
-    });
-  };
-
-  const voteComment = (postId: string, commentId: string, vote: 1 | -1 | 0) => {
-    setComments((prev) => ({
-      ...prev,
-      [postId]: voteCommentRecursive(prev[postId] || [], commentId, vote),
-    }));
-  };
-
   const addPost = (
     _postData: Omit<
       Post,
@@ -232,14 +184,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return `p_${Date.now()}`;
   };
 
-  const addComment = (
-    _postId: string,
-    _parentId: string | null,
-    _content: string,
-  ) => {
-    // Disabled until slice 6.
-  };
-
   return (
     <AppContext.Provider
       value={{
@@ -247,14 +191,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         communitiesLoading,
         communitiesError,
         joinError,
-        comments,
         user,
         refreshCommunities,
         toggleJoinCommunity,
         votePost,
-        voteComment,
         addPost,
-        addComment,
       }}
     >
       {children}

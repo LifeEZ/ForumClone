@@ -45,7 +45,7 @@ A person with a registered account on Hiver — username, email, and profile. Di
 _Avoid_: Member (member implies community membership), account
 
 **Feed**:
-An ordered list of posts sorted newest-first in v1.
+An ordered list of posts sorted newest-first in v1. The newest-first rule is feed-scoped — it governs feeds only; **comment threads** are chronological (oldest-first within a thread so a discussion reads top-to-bottom).
 _Avoid_: Timeline, stream
 
 **Home feed**:

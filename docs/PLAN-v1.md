@@ -122,18 +122,18 @@ Run after v1 works locally. Seed script populates both DBs on deploy or via one-
 
 Each slice ships API + UI + tests before moving on. Slices 1-2 are complete as a monolith; the **architecture split (2.5)** lands before any cross-domain write path is built, so the remaining slices are built service-first and never write the coupling a split would have to undo. See [Architecture](#architecture) and [ADR-0002](./adr/0002-microservices-split.md).
 
-| # | Slice | Demo milestone |
-|---|-------|----------------|
-| 1 | Auth (register, login, logout, refresh) | Account works (→ Identity service) |
-| 2 | Read feeds (global, community, post detail) | App looks alive (→ Content service) |
-| **2.5** | **Architecture split** (gateway + Identity + Content, RS256 JWT, claims auth, author snapshot, per-service DB/CI) | Distributed system runs end-to-end |
-| 3 | Join / leave + home feed logic | Personalization works (Content, claims-based) |
-| 4 | Create community | New `/c/...` exists (Content, author snapshot) |
-| 5 | Create text post | User publishes content (Content, no user FK) |
-| 6 | Comments + replies | Threads work (Content) |
-| 7 | Votes + karma | Engagement works (score local to Content; karma → Identity via event) |
-| 8 | CI, seed polish, README | Production-shaped (per-service CI matrix) |
-| 9 | Deploy | Live URL |
+| # | Slice | Demo milestone | Status |
+|---|-------|----------------|--------|
+| 1 | Auth (register, login, logout, refresh) | Account works (→ Identity service) | ✅ |
+| 2 | Read feeds (global, community, post detail) | App looks alive (→ Content service) | ✅ |
+| **2.5** | **Architecture split** (gateway + Identity + Content, RS256 JWT, claims auth, author snapshot, per-service DB/CI) | Distributed system runs end-to-end | ✅ |
+| 3 | Join / leave + home feed logic | Personalization works (Content, claims-based) | ✅ |
+| 4 | Create community | New `/c/...` exists (Content, author snapshot) | ✅ |
+| 5 | Create text post | User publishes content (Content, no user FK) | ✅ |
+| 6 | Comments + replies | Threads work (Content) | ⬜ |
+| 7 | Votes + karma | Engagement works (score local to Content; karma → Identity via event) | ⬜ |
+| 8 | CI, seed polish, README | Production-shaped (per-service CI matrix) | ⬜ |
+| 9 | Deploy | Live URL | ⬜ |
 
 ## Frontend conventions
 

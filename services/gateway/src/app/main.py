@@ -62,15 +62,7 @@ def create_app() -> FastAPI:
 
     @app.middleware("http")
     async def enforce_auth_aware_caching(request: Request, call_next):
-        """Stop caches serving a stale unauthenticated body to an authed request.
-
-        API responses carry per-user data (e.g. ``is_member``, ``user_vote``)
-        that varies by the ``Authorization`` header but is indistinguishable to
-        a cache keyed on URL alone. Every API response therefore ``Vary``ies on
-        ``Authorization`` and defaults to uncachable. A route that *wants* to be
-        cached sets its own ``Cache-Control`` and this middleware leaves it in
-        place (non-clobbering), so genuinely public endpoints can opt in.
-        """
+        """Stop caches serving a stale unauthenticated body to an authed request."""
         response = await call_next(request)
         if request.url.path.startswith("/api/v1/"):
             existing_vary = response.headers.get("vary", "")

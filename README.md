@@ -70,4 +70,4 @@ Identity and content need a database and run their migrations with `uv run alemb
 
 ## Status
 
-Slices 1-4 are implemented: guest browsing, full auth, join/leave with personalized home feed, and create-community (creator auto-joins as first member). Creating posts, commenting, and voting (slices 5-7) are not wired to the backend yet.
+Slices 1-5 are implemented: guest browsing, full auth, join/leave with personalized home feed, create-community (creator auto-joins as first member), and create text post (member-only, author snapshot from JWT). Commenting and voting (slices 6-7) are not wired to the backend yet.

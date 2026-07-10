@@ -1,5 +1,6 @@
-import { Community, Post, User } from '@/types';
+import { Community, Post, User, Comment } from '@/types';
 import {
+  ApiComment,
   ApiCommunity,
   ApiPostFeedItem,
   ApiUser,
@@ -53,6 +54,23 @@ export function mapApiPost(api: ApiPostFeedItem): Post {
     downvotes: api.downvotes,
     userVote: (api.user_vote ?? 0) as 1 | -1 | 0,
     commentCount: api.comment_count,
+  };
+}
+
+export function mapApiComment(api: ApiComment): Comment {
+  const upvotes = api.score >= 0 ? api.score : 0;
+  const downvotes = api.score < 0 ? -api.score : 0;
+  return {
+    id: api.id,
+    postId: api.post_id,
+    parentId: api.parent_id,
+    author: mapApiUserPublic(api.author),
+    createdAt: api.created_at,
+    content: api.content,
+    upvotes,
+    downvotes,
+    userVote: (api.user_vote ?? 0) as 1 | -1 | 0,
+    replies: (api.replies ?? []).map(mapApiComment),
   };
 }
 

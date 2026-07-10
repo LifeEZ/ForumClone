@@ -9,7 +9,7 @@ author's own profile via Identity). Tokens are verified with Identity's public k
 
 ## Endpoints
 
-- `GET /api/v1/communities`, `POST /api/v1/communities` (create — creator auto-joins as first member), `/{name}`, `/{name}/posts`, `/{name}/join` (POST/DELETE)
+- `GET /api/v1/communities`, `POST /api/v1/communities` (create — creator auto-joins as first member), `/{name}`, `/{name}/posts` (GET list · POST create text post — members only), `/{name}/join` (POST/DELETE)
 - `GET /api/v1/communities/mine` (joined communities, auth)
 - `GET /api/v1/posts`, `/{id}`, `/home`
 - `comments` / `votes` — slices 6-7 (stubs today)
