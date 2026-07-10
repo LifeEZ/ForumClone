@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from 'react';
 import { formatDistanceToNow } from 'date-fns';
+import { parseApiDate } from '@/lib/dates';
 
 function subscribeToClientMount() {
   return () => {};
@@ -22,7 +23,7 @@ export function RelativeTime({ date }: { date: string | Date }) {
     getClientSnapshot,
     getServerSnapshot,
   );
-  const label = isClient ? formatDistanceToNow(new Date(date)) : '';
+  const label = isClient ? formatDistanceToNow(parseApiDate(date)) : '';
 
   return <span suppressHydrationWarning>{label || '…'}</span>;
 }

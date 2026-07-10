@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Trees } from 'lucide-react';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
@@ -15,7 +15,7 @@ interface AuthFormViewProps {
 
 export function AuthFormView({ mode }: AuthFormViewProps) {
   const router = useRouter();
-  const { login, register } = useAuth();
+  const { user, isLoading, login, register } = useAuth();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,6 +23,24 @@ export function AuthFormView({ mode }: AuthFormViewProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isLogin = mode === 'login';
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.replace('/');
+    }
+  }, [isLoading, user, router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-forest-muted">
+        Loading…
+      </div>
+    );
+  }
+
+  if (user) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

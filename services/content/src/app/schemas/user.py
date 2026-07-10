@@ -1,6 +1,6 @@
-from datetime import datetime
-
 from pydantic import BaseModel
+
+from app.schemas.datetime import UtcDatetime
 
 
 class AuthorResponse(BaseModel):
@@ -18,4 +18,4 @@ class AuthorResponse(BaseModel):
     display_name: str | None
     bio: str | None
     avatar_url: str | None
-    created_at: datetime
+    created_at: UtcDatetime

@@ -53,6 +53,21 @@ async def test_create_post_happy_path(
     assert post.community_id == community_id
 
 
+async def test_create_post_created_at_serializes_as_utc(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+) -> None:
+    await _seed_community(client, auth_headers)
+    resp = await client.post(
+        "/api/v1/communities/films/posts",
+        json={"title": "Timestamp check", "content": "now"},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 201, resp.text
+    created_at = resp.json()["created_at"]
+    assert created_at.endswith("Z"), created_at
+
+
 async def test_create_post_without_content(
     client: AsyncClient,
     auth_headers: dict[str, str],

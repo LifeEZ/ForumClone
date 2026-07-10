@@ -1,6 +1,6 @@
-from datetime import datetime
-
 from pydantic import BaseModel, ConfigDict
+
+from app.schemas.datetime import UtcDatetime
 
 
 class CommentCreate(BaseModel):
@@ -23,7 +23,7 @@ class CommentResponse(BaseModel):
     parent_id: str | None
     depth: int
     score: int
-    created_at: datetime
+    created_at: UtcDatetime
     is_deleted: bool
     user_vote: int | None = None
     replies: list["CommentResponse"] = []

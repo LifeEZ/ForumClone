@@ -1,8 +1,9 @@
 import re
-from datetime import datetime
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.schemas.datetime import UtcDatetime
 
 COMMUNITY_DESCRIPTION_MAX_LENGTH = 500
 
@@ -78,7 +79,7 @@ class CommunityResponse(BaseModel):
     banner_url: str | None
     creator_id: str
     member_count: int
-    created_at: datetime
+    created_at: UtcDatetime
     is_member: bool | None = None
 
     @classmethod

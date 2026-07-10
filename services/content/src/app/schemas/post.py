@@ -1,8 +1,8 @@
-from datetime import datetime
 from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app.schemas.datetime import UtcDatetime
 from app.schemas.user import AuthorResponse
 
 if TYPE_CHECKING:
@@ -71,7 +71,7 @@ class PostResponse(BaseModel):
     author_id: str
     score: int
     comment_count: int
-    created_at: datetime
+    created_at: UtcDatetime
     is_deleted: bool
     is_locked: bool
     user_vote: int | None = None
@@ -88,7 +88,7 @@ class PostFeedItem(BaseModel):
     downvotes: int
     user_vote: int = 0
     comment_count: int
-    created_at: datetime
+    created_at: UtcDatetime
     is_deleted: bool
 
     @classmethod
