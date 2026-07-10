@@ -15,9 +15,11 @@ the key.
 from __future__ import annotations
 
 import time
+from typing import cast
 
 import httpx
 import jwt
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from jwt.algorithms import RSAAlgorithm
 
 from app.config import settings
@@ -37,11 +39,11 @@ class KeyResolver:
     def __init__(self, jwks_url: str, *, ttl_seconds: int = _JWKS_TTL_SECONDS) -> None:
         self._jwks_url = jwks_url
         self._ttl_seconds = ttl_seconds
-        self._keys_by_kid: dict[str, object] = {}
+        self._keys_by_kid: dict[str, RSAPublicKey] = {}
         self._fetched_at: float = 0.0
 
     @classmethod
-    def for_keys(cls, keys_by_kid: dict[str, object]) -> KeyResolver:
+    def for_keys(cls, keys_by_kid: dict[str, RSAPublicKey]) -> KeyResolver:
         """Build a resolver preloaded with fixed keys — used by tests to avoid HTTP."""
         resolver = cls(jwks_url="", ttl_seconds=10**9)
         resolver._keys_by_kid = dict(keys_by_kid)
@@ -56,23 +58,23 @@ class KeyResolver:
             resp = await client.get(self._jwks_url)
             resp.raise_for_status()
             jwks = resp.json()
-        keys: dict[str, object] = {}
+        keys: dict[str, RSAPublicKey] = {}
         for jwk in jwks.get("keys", []):
             kid = jwk.get("kid")
             if not kid:
                 continue
-            keys[kid] = RSAAlgorithm.from_jwk(jwk)
+            keys[kid] = cast(RSAPublicKey, RSAAlgorithm.from_jwk(jwk))
         if not keys:
             raise KeyResolverError("JWKS contained no usable keys")
         self._keys_by_kid = keys
         self._fetched_at = time.monotonic()
 
-    async def _keys(self) -> dict[str, object]:
+    async def _keys(self) -> dict[str, RSAPublicKey]:
         if not self._is_fresh():
             await self._fetch()
         return self._keys_by_kid
 
-    async def get_signing_key(self, token: str) -> object:
+    async def get_signing_key(self, token: str) -> RSAPublicKey:
         try:
             kid = jwt.get_unverified_header(token).get("kid")
         except jwt.PyJWTError as exc:

@@ -28,6 +28,13 @@ export class ApiError extends Error {
   }
 }
 
+export class SessionExpiredError extends Error {
+  constructor() {
+    super('Session expired');
+    this.name = 'SessionExpiredError';
+  }
+}
+
 const ACCESS_TOKEN_KEY = 'hiver_access_token';
 const REFRESH_TOKEN_KEY = 'hiver_refresh_token';
 
@@ -69,10 +76,43 @@ async function parseError(resp: Response): Promise<string> {
   return resp.statusText || 'Request failed';
 }
 
+const MAX_RETRIES = 3;
+const BASE_BACKOFF_MS = 500;
+
+function backoffDelay(attempt: number, retryAfter: string | null): number {
+  if (retryAfter) {
+    const seconds = parseInt(retryAfter, 10);
+    if (!Number.isNaN(seconds) && seconds > 0) return seconds * 1000;
+  }
+  return BASE_BACKOFF_MS * 2 ** attempt;
+}
+
+async function fetchWithRetry(
+  input: string,
+  init: RequestInit,
+): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const resp = await fetch(input, init);
+    if (resp.status === 429 || resp.status >= 500) {
+      if (attempt < MAX_RETRIES) {
+        const delay = backoffDelay(attempt, resp.headers.get('retry-after'));
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+    }
+    return resp;
+  }
+}
+
+function isAbortError(err: unknown): boolean {
+  return err instanceof Error && err.name === 'AbortError';
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
   accessToken?: string | null,
+  signal?: AbortSignal,
 ): Promise<T> {
   const headers = new Headers(options.headers);
   if (!headers.has('Content-Type') && options.body) {
@@ -82,10 +122,11 @@ async function request<T>(
     headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
-  const resp = await fetch(`${API_BASE}/api/v1${path}`, {
+  const resp = await fetchWithRetry(`${API_BASE}/api/v1${path}`, {
     ...options,
     headers,
     cache: 'no-store',
+    signal: signal ?? options.signal,
   });
 
   if (!resp.ok) {
@@ -124,20 +165,46 @@ async function refreshStoredTokens(): Promise<TokenPair> {
 async function requestWithAuth<T>(
   path: string,
   options: RequestInit = {},
+  signal?: AbortSignal,
 ): Promise<T> {
   const { accessToken, refreshToken } = getStoredTokens();
   if (!accessToken) {
-    throw new ApiError(401, 'Not authenticated');
+    throw new SessionExpiredError();
   }
 
   try {
-    return await request<T>(path, options, accessToken);
+    return await request<T>(path, options, accessToken, signal);
   } catch (err) {
+    if (isAbortError(err)) throw err;
     if (!(err instanceof ApiError) || err.status !== 401 || !refreshToken) {
       throw err;
     }
-    const tokens = await refreshStoredTokens();
-    return await request<T>(path, options, tokens.access_token);
+    try {
+      const tokens = await refreshStoredTokens();
+      return await request<T>(path, options, tokens.access_token, signal);
+    } catch (refreshErr) {
+      if (refreshErr instanceof ApiError && refreshErr.status === 401) {
+        throw new SessionExpiredError();
+      }
+      throw refreshErr;
+    }
+  }
+}
+
+async function requestWithOptionalAuth<T>(
+  path: string,
+  options: RequestInit = {},
+  signal?: AbortSignal,
+): Promise<T> {
+  const { accessToken } = getStoredTokens();
+  try {
+    return await request<T>(path, options, accessToken ?? undefined, signal);
+  } catch (err) {
+    if (isAbortError(err)) throw err;
+    if (err instanceof ApiError && err.status === 401 && accessToken) {
+      return await request<T>(path, options, undefined, signal);
+    }
+    throw err;
   }
 }
 
@@ -222,29 +289,33 @@ export interface ApiPostFeedItem {
   is_deleted: boolean;
 }
 
-export async function fetchCommunities(): Promise<ApiCommunity[]> {
-  return request<ApiCommunity[]>('/communities');
+export async function fetchCommunities(signal?: AbortSignal): Promise<ApiCommunity[]> {
+  return request<ApiCommunity[]>('/communities', {}, undefined, signal);
 }
 
 export async function fetchCommunity(
   name: string,
-  options: { authenticated?: boolean } = {},
+  options: { authenticated?: boolean; signal?: AbortSignal } = {},
 ): Promise<ApiCommunity> {
   const path = `/communities/${encodeURIComponent(name)}`;
   if (options.authenticated) {
-    return requestWithAuth<ApiCommunity>(path);
+    return requestWithAuth<ApiCommunity>(path, {}, options.signal);
   }
-  return request<ApiCommunity>(path);
+  return request<ApiCommunity>(path, {}, undefined, options.signal);
 }
 
 export async function fetchGlobalPosts(
-  params: { limit?: number; offset?: number } = {},
+  params: { limit?: number; offset?: number; signal?: AbortSignal } = {},
 ): Promise<ApiPostFeedItem[]> {
   const search = new URLSearchParams();
   if (params.limit != null) search.set('limit', String(params.limit));
   if (params.offset != null) search.set('offset', String(params.offset));
   const qs = search.toString();
-  return request<ApiPostFeedItem[]>(`/posts${qs ? `?${qs}` : ''}`);
+  return requestWithOptionalAuth<ApiPostFeedItem[]>(
+    `/posts${qs ? `?${qs}` : ''}`,
+    {},
+    params.signal,
+  );
 }
 
 export async function fetchCommunityPosts(
@@ -255,17 +326,21 @@ export async function fetchCommunityPosts(
   if (params.limit != null) search.set('limit', String(params.limit));
   if (params.offset != null) search.set('offset', String(params.offset));
   const qs = search.toString();
-  return request<ApiPostFeedItem[]>(
+  return requestWithOptionalAuth<ApiPostFeedItem[]>(
     `/communities/${encodeURIComponent(name)}/posts${qs ? `?${qs}` : ''}`,
   );
 }
 
-export async function fetchPost(postId: string): Promise<ApiPostFeedItem> {
-  return request<ApiPostFeedItem>(`/posts/${encodeURIComponent(postId)}`);
+export async function fetchPost(postId: string, signal?: AbortSignal): Promise<ApiPostFeedItem> {
+  return requestWithOptionalAuth<ApiPostFeedItem>(
+    `/posts/${encodeURIComponent(postId)}`,
+    {},
+    signal,
+  );
 }
 
 export async function fetchHomePosts(
-  params: { limit?: number; offset?: number } = {},
+  params: { limit?: number; offset?: number; signal?: AbortSignal } = {},
 ): Promise<ApiPostFeedItem[]> {
   const search = new URLSearchParams();
   if (params.limit != null) search.set('limit', String(params.limit));
@@ -273,11 +348,13 @@ export async function fetchHomePosts(
   const qs = search.toString();
   return requestWithAuth<ApiPostFeedItem[]>(
     `/posts/home${qs ? `?${qs}` : ''}`,
+    {},
+    params.signal,
   );
 }
 
-export async function fetchJoinedCommunities(): Promise<ApiCommunity[]> {
-  return requestWithAuth<ApiCommunity[]>('/communities/mine');
+export async function fetchJoinedCommunities(signal?: AbortSignal): Promise<ApiCommunity[]> {
+  return requestWithAuth<ApiCommunity[]>('/communities/mine', {}, signal);
 }
 
 export async function joinCommunity(name: string): Promise<ApiCommunity> {
@@ -332,8 +409,12 @@ export interface ApiComment {
   replies: ApiComment[];
 }
 
-export async function fetchComments(postId: string): Promise<ApiComment[]> {
-  return request<ApiComment[]>(`/posts/${encodeURIComponent(postId)}/comments`);
+export async function fetchComments(postId: string, signal?: AbortSignal): Promise<ApiComment[]> {
+  return requestWithOptionalAuth<ApiComment[]>(
+    `/posts/${encodeURIComponent(postId)}/comments`,
+    {},
+    signal,
+  );
 }
 
 export async function createComment(

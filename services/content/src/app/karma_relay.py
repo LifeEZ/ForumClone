@@ -38,9 +38,11 @@ async def drain_outbox(
     client: httpx.AsyncClient | None = None,
 ) -> int:
     """Drain one batch of undispatched outbox events. Returns the count dispatched."""
-    own_client = client is None
-    if own_client:
+    if client is None:
         client = httpx.AsyncClient(timeout=5.0)
+        own_client = True
+    else:
+        own_client = False
 
     dispatched = 0
     try:

@@ -26,6 +26,7 @@ interface AppContextType {
   communitiesLoading: boolean;
   communitiesError: string | null;
   joinError: string | null;
+  joinedCount: number;
   user: ReturnType<typeof mapAuthUser> | null;
   refreshCommunities: () => Promise<void>;
   toggleJoinCommunity: (communityId: string) => Promise<void>;
@@ -54,35 +55,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [communitiesLoading, setCommunitiesLoading] = useState(true);
   const [communitiesError, setCommunitiesError] = useState<string | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [joinedCount, setJoinedCount] = useState(0);
 
-  const loadCommunities = useCallback(async () => {
+  const loadCommunities = useCallback(async (signal?: AbortSignal) => {
     setCommunitiesLoading(true);
     setCommunitiesError(null);
     try {
-      const data = await fetchCommunities();
+      const data = await fetchCommunities(signal);
 
       let joinedIds = new Set<string>();
       if (authUser) {
         const { accessToken } = getStoredTokens();
         if (accessToken) {
           try {
-            const joined = await fetchJoinedCommunities();
+            const joined = await fetchJoinedCommunities(signal);
             joinedIds = new Set(joined.map((j) => j.id));
+            setJoinedCount(joined.length);
           } catch {
-            // Fall back to unjoined state for all communities.
+            setJoinedCount(0);
           }
+        } else {
+          setJoinedCount(0);
         }
+      } else {
+        setJoinedCount(0);
       }
 
+      if (signal?.aborted) return;
       setCommunities(
         data.map((c) => mapApiCommunity(c, joinedIds.has(c.id))),
       );
     } catch (err) {
+      if (signal?.aborted) return;
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       const message =
         err instanceof ApiError ? err.message : 'Could not load communities';
       setCommunitiesError(message);
     } finally {
-      setCommunitiesLoading(false);
+      if (!signal?.aborted) setCommunitiesLoading(false);
     }
   }, [authUser]);
 
@@ -93,16 +103,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (authLoading) return;
 
-    let cancelled = false;
+    const controller = new AbortController();
 
     async function run() {
-      await loadCommunities();
-      if (cancelled) return;
+      await loadCommunities(controller.signal);
     }
 
     void run();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [authLoading, loadCommunities]);
 
@@ -192,6 +201,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         communitiesLoading,
         communitiesError,
         joinError,
+        joinedCount,
         user,
         refreshCommunities,
         toggleJoinCommunity,

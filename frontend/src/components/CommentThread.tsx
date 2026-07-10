@@ -49,7 +49,11 @@ export function CommentThread({
   const elbowRefs = useRef<(HTMLButtonElement | null)[]>([]);
   // Rail is split into segments that stop where each elbow begins and resume
   // below that elbow's descent, so the line never overlaps the curves.
-  const [segments, setSegments] = useState<{ top: number; height: number }[]>([]);
+  const [measuredSegments, setMeasuredSegments] = useState<
+    { top: number; height: number }[]
+  >([]);
+  const segments =
+    !hasReplies || isCollapsed || !drawLine ? [] : measuredSegments;
   // Hovering any rail segment or elbow highlights the whole thread together.
   const [threadHovered, setThreadHovered] = useState(false);
 
@@ -68,7 +72,6 @@ export function CommentThread({
 
   useLayoutEffect(() => {
     if (!hasReplies || isCollapsed || !drawLine) {
-      setSegments([]);
       return;
     }
     const measure = () => {
@@ -80,7 +83,7 @@ export function CommentThread({
         .filter((el): el is HTMLButtonElement => !!el)
         .map((el) => el.getBoundingClientRect().top - rootTop);
       if (starts.length === 0) {
-        setSegments([]);
+        setMeasuredSegments([]);
         return;
       }
       const segs: { top: number; height: number }[] = [];
@@ -93,7 +96,7 @@ export function CommentThread({
         const segTop = starts[i - 1] + CURVE_R;
         if (starts[i] > segTop) segs.push({ top: segTop, height: starts[i] - segTop });
       }
-      setSegments(segs);
+      setMeasuredSegments(segs);
     };
     measure();
     const ro = new ResizeObserver(measure);

@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
     # Redis for rate limiting. Leave blank to disable (e.g. local dev without Redis).
     redis_url: str = ""
-    rate_limit_requests: int = 120
+    rate_limit_requests: int = 600
     rate_limit_window_seconds: int = 60
 
     debug: bool = False

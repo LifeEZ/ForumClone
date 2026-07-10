@@ -20,6 +20,8 @@ from hiver_auth_contract import (
 
 from app.keyresolver import KeyResolverError, get_resolver
 
+__all__ = ["CurrentUser", "verify_token", "TokenInvalidError"]
+
 
 @dataclass(frozen=True)
 class CurrentUser:

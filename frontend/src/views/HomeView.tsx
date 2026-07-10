@@ -5,25 +5,23 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { fadeUp } from '@/lib/motion';
 import { useAuth } from '@/context/AuthContext';
+import { useAppContext } from '@/context/AppContext';
 import { CommunitiesStrip } from '@/components/CommunitiesStrip';
 import { PostCard } from '@/components/PostCard';
 import { SortBar } from '@/components/SortBar';
 import {
   ApiError,
   castVote,
-  fetchCommunities,
   fetchGlobalPosts,
   fetchHomePosts,
-  fetchJoinedCommunities,
   getStoredTokens,
 } from '@/lib/api';
-import { mapApiCommunity, mapApiPost, updatePostVote } from '@/lib/mappers';
-import { Community, Post } from '@/types';
+import { mapApiPost, updatePostVote } from '@/lib/mappers';
+import { Post } from '@/types';
 
 export function HomeView() {
   const { user, isLoading: authLoading } = useAuth();
-  const [communities, setCommunities] = useState<Community[]>([]);
-  const [joinedCount, setJoinedCount] = useState(0);
+  const { communities, communitiesLoading, joinedCount } = useAppContext();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,55 +29,9 @@ export function HomeView() {
     useState(false);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || communitiesLoading) return;
 
-    let cancelled = false;
-
-    async function loadCommunities() {
-      try {
-        const data = await fetchCommunities();
-        if (cancelled) return;
-
-        let joinedIds = new Set<string>();
-        if (user) {
-          const { accessToken } = getStoredTokens();
-          if (accessToken) {
-            try {
-              const joined = await fetchJoinedCommunities();
-              if (cancelled) return;
-              joinedIds = new Set(joined.map((j) => j.id));
-              setJoinedCount(joined.length);
-            } catch {
-              setJoinedCount(0);
-            }
-          } else {
-            setJoinedCount(0);
-          }
-        } else {
-          setJoinedCount(0);
-        }
-
-        setCommunities(
-          data.map((c) => mapApiCommunity(c, joinedIds.has(c.id))),
-        );
-      } catch {
-        if (!cancelled) {
-          setCommunities([]);
-          setJoinedCount(0);
-        }
-      }
-    }
-
-    void loadCommunities();
-    return () => {
-      cancelled = true;
-    };
-  }, [user, authLoading]);
-
-  useEffect(() => {
-    if (authLoading) return;
-
-    let cancelled = false;
+    const controller = new AbortController();
 
     async function loadPosts() {
       setLoading(true);
@@ -90,14 +42,14 @@ export function HomeView() {
         if (user) {
           const { accessToken } = getStoredTokens();
           if (!accessToken) {
-            const data = await fetchGlobalPosts({ limit: 20 });
-            if (cancelled) return;
+            const data = await fetchGlobalPosts({ limit: 20, signal: controller.signal });
+            if (controller.signal.aborted) return;
             setPosts(data.map(mapApiPost));
             return;
           }
 
-          const homeData = await fetchHomePosts({ limit: 20 });
-          if (cancelled) return;
+          const homeData = await fetchHomePosts({ limit: 20, signal: controller.signal });
+          if (controller.signal.aborted) return;
 
           if (homeData.length > 0) {
             setPosts(homeData.map(mapApiPost));
@@ -105,33 +57,34 @@ export function HomeView() {
           }
 
           if (joinedCount === 0) {
-            const globalData = await fetchGlobalPosts({ limit: 20 });
-            if (cancelled) return;
+            const globalData = await fetchGlobalPosts({ limit: 20, signal: controller.signal });
+            if (controller.signal.aborted) return;
             setPosts(globalData.map(mapApiPost));
             setShowPersonalizationBanner(true);
           } else {
             setPosts([]);
           }
         } else {
-          const data = await fetchGlobalPosts({ limit: 20 });
-          if (cancelled) return;
+          const data = await fetchGlobalPosts({ limit: 20, signal: controller.signal });
+          if (controller.signal.aborted) return;
           setPosts(data.map(mapApiPost));
         }
       } catch (err) {
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         setError(
           err instanceof ApiError ? err.message : 'Could not load posts',
         );
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 
     void loadPosts();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
-  }, [user, authLoading, joinedCount]);
+  }, [user, authLoading, communitiesLoading, joinedCount]);
 
   const handleVote = async (postId: string, vote: 1 | -1 | 0) => {
     if (!user) return;

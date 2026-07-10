@@ -10,8 +10,10 @@ from hiver_auth_contract import (
     CLAIM_SUB,
     CLAIM_TYPE,
     CLAIM_USERNAME,
-    TokenInvalidError,
     claims_from_payload,
+)
+from hiver_auth_contract import (
+    TokenInvalidError as TokenInvalidError,
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -39,42 +39,44 @@ export function PostDetailView({ name, id }: { name: string; id: string }) {
   useEffect(() => {
     if (authLoading) return;
 
-    let cancelled = false;
+    const controller = new AbortController();
 
     async function loadCommunity() {
       setCommunityLoading(true);
       try {
-        const data = await fetchCommunity(name, { authenticated: !!authUser });
-        if (cancelled) return;
+        const data = await fetchCommunity(name, { authenticated: !!authUser, signal: controller.signal });
+        if (controller.signal.aborted) return;
         setCommunity(mapApiCommunity(data));
       } catch (err) {
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         if (err instanceof ApiError && err.status === 404) {
           setCommunity(null);
         }
       } finally {
-        if (!cancelled) setCommunityLoading(false);
+        if (!controller.signal.aborted) setCommunityLoading(false);
       }
     }
 
     void loadCommunity();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [name, authUser, authLoading]);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
     async function loadPost() {
       setPostLoading(true);
       setError(null);
       try {
-        const data = await fetchPost(id);
-        if (cancelled) return;
+        const data = await fetchPost(id, controller.signal);
+        if (controller.signal.aborted) return;
         setPost(mapApiPost(data));
       } catch (err) {
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         if (err instanceof ApiError && err.status === 404) {
           setError('not_found');
         } else {
@@ -83,39 +85,40 @@ export function PostDetailView({ name, id }: { name: string; id: string }) {
           );
         }
       } finally {
-        if (!cancelled) setPostLoading(false);
+        if (!controller.signal.aborted) setPostLoading(false);
       }
     }
 
     void loadPost();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [id]);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
     async function run() {
       setCommentsLoading(true);
       setCommentError(null);
       try {
-        const data = await fetchComments(id);
-        if (cancelled) return;
+        const data = await fetchComments(id, controller.signal);
+        if (controller.signal.aborted) return;
         setComments(data.map(mapApiComment));
       } catch (err) {
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         setCommentError(
           err instanceof ApiError ? err.message : 'Could not load comments',
         );
       } finally {
-        if (!cancelled) setCommentsLoading(false);
+        if (!controller.signal.aborted) setCommentsLoading(false);
       }
     }
 
     void run();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [id]);
 

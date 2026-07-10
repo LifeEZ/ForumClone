@@ -5,7 +5,7 @@ by path prefix to the Identity or Content service, applies CORS, and enforces
 Redis-backed rate limiting. Each downstream service verifies the JWT itself.
 """
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
 import httpx
@@ -61,7 +61,10 @@ def create_app() -> FastAPI:
     )
 
     @app.middleware("http")
-    async def enforce_auth_aware_caching(request: Request, call_next):
+    async def enforce_auth_aware_caching(
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
         """Stop caches serving a stale unauthenticated body to an authed request."""
         response = await call_next(request)
         if request.url.path.startswith("/api/v1/"):
@@ -85,11 +88,13 @@ def create_app() -> FastAPI:
     async def proxy(path: str, request: Request) -> Response:
         client_ip = request.client.host if request.client else "unknown"
         authorization = request.headers.get("authorization")
-        if not await check_rate_limit(authorization, client_ip):
+        retry_after = await check_rate_limit(authorization, client_ip)
+        if retry_after is not None:
             return Response(
                 content='{"detail":"Rate limit exceeded"}',
                 status_code=429,
                 media_type="application/json",
+                headers={"retry-after": str(retry_after)},
             )
 
         first_segment = path.split("/", 1)[0]

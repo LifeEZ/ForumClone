@@ -9,7 +9,9 @@ import {
   type ReactNode,
 } from 'react';
 import {
+  ApiError,
   ApiUser,
+  SessionExpiredError,
   clearStoredTokens,
   fetchCurrentUser,
   getStoredTokens,
@@ -37,11 +39,25 @@ async function loadUserFromStorage(): Promise<ApiUser | null> {
   const { accessToken } = getStoredTokens();
   if (!accessToken) return null;
 
-  try {
-    return await fetchCurrentUser();
-  } catch {
-    clearStoredTokens();
-    return null;
+  const MAX_ATTEMPTS = 5;
+  const BASE_DELAY_MS = 1000;
+
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fetchCurrentUser();
+    } catch (err) {
+      if (err instanceof SessionExpiredError) {
+        clearStoredTokens();
+        return null;
+      }
+      const isTransient =
+        err instanceof ApiError && (err.status === 429 || err.status >= 500);
+      if (!isTransient || attempt >= MAX_ATTEMPTS) {
+        return null;
+      }
+      const delay = BASE_DELAY_MS * 2 ** attempt;
+      await new Promise((r) => setTimeout(r, delay));
+    }
   }
 }
 

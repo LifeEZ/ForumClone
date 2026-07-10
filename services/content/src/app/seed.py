@@ -8,6 +8,7 @@ identity_db. Run after migrations:
 import asyncio
 from collections import Counter
 from datetime import UTC, datetime, timedelta
+from typing import TypedDict
 
 from sqlalchemy import select
 
@@ -27,7 +28,38 @@ SEED_AUTHORS = {
     "u-seed-css": "css_wizard",
 }
 
-SEED_COMMUNITIES = [
+
+class _SeedCommunity(TypedDict):
+    id: str
+    name: str
+    display_name: str
+    description: str
+    icon_url: str
+    banner_url: str
+    creator_id: str
+
+
+class _SeedPost(TypedDict):
+    id: str
+    community_id: str
+    author_id: str
+    title: str
+    content: str
+    score: int
+    days_ago: int
+
+
+class _SeedComment(TypedDict):
+    id: str
+    post_id: str
+    author_id: str
+    parent_id: str | None
+    depth: int
+    content: str
+    days_ago: int
+
+
+SEED_COMMUNITIES: list[_SeedCommunity] = [
     {
         "id": "c1",
         "name": "films",
@@ -57,7 +89,7 @@ SEED_COMMUNITIES = [
     },
 ]
 
-SEED_POSTS = [
+SEED_POSTS: list[_SeedPost] = [
     {
         "id": "p1",
         "community_id": "c1",
@@ -171,7 +203,7 @@ SEED_POSTS = [
 
 # One real thread on p1 (per PLAN seed spec). comment_count is derived from
 # these, so no post carries a fake count.
-SEED_COMMENTS = [
+SEED_COMMENTS: list[_SeedComment] = [
     {
         "id": "cm-seed-1",
         "post_id": "p1",

@@ -1,5 +1,5 @@
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -40,7 +40,7 @@ class CommunityCreate(BaseModel):
     name: str
     display_name: str
     description: str | None = Field(default=None, max_length=COMMUNITY_DESCRIPTION_MAX_LENGTH)
-    rules: list[dict] | None = None
+    rules: list[dict[str, Any]] | None = None
 
     @field_validator("name")
     @classmethod
@@ -64,7 +64,7 @@ class CommunityCreate(BaseModel):
 class CommunityUpdate(BaseModel):
     display_name: str | None = None
     description: str | None = Field(default=None, max_length=COMMUNITY_DESCRIPTION_MAX_LENGTH)
-    rules: list[dict] | None = None
+    rules: list[dict[str, Any]] | None = None
 
 
 class CommunityResponse(BaseModel):
@@ -74,7 +74,7 @@ class CommunityResponse(BaseModel):
     name: str
     display_name: str
     description: str | None
-    rules: list | None
+    rules: list[Any] | None
     icon_url: str | None
     banner_url: str | None
     creator_id: str

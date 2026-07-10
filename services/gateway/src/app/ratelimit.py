@@ -37,17 +37,22 @@ def _client_key(authorization: str | None, client_ip: str) -> str:
     return f"rl:ip:{client_ip}"
 
 
-async def check_rate_limit(authorization: str | None, client_ip: str) -> bool:
-    """Return True if the request is allowed, False if it should be rejected (429)."""
+async def check_rate_limit(
+    authorization: str | None, client_ip: str
+) -> int | None:
+    """Return ``None`` if allowed, or the seconds until the window resets."""
     redis = _get_redis()
     if redis is None:
-        return True
+        return None
 
     key = _client_key(authorization, client_ip)
     count = await redis.incr(key)
     if count == 1:
         await redis.expire(key, settings.rate_limit_window_seconds)
-    return count <= settings.rate_limit_requests
+    if count <= settings.rate_limit_requests:
+        return None
+    ttl = await redis.ttl(key)
+    return max(ttl, 1)
 
 
 async def close_redis() -> None:
