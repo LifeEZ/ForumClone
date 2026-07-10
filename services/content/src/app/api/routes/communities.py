@@ -25,6 +25,7 @@ from app.services.post import (
     create_post,
     list_posts,
 )
+from app.services.vote import get_user_votes
 
 router = APIRouter(prefix="/communities", tags=["communities"])
 
@@ -77,6 +78,7 @@ async def create_community_endpoint(
 async def list_community_posts_endpoint(
     name: str,
     session: SessionDep,
+    user: CurrentUserOptionalDep,
     offset: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
 ) -> list[PostFeedItem]:
@@ -85,7 +87,12 @@ async def list_community_posts_endpoint(
     except CommunityNotFoundError:
         raise HTTPException(status_code=404, detail="Community not found") from None
     posts = await list_posts(session, community_id=community.id, offset=offset, limit=limit)
-    return [PostFeedItem.from_post(post) for post in posts]
+    votes = (
+        await get_user_votes(session, user.id, "post", [p.id for p in posts])
+        if user is not None
+        else {}
+    )
+    return [PostFeedItem.from_post(post, user_vote=votes.get(post.id, 0)) for post in posts]
 
 
 @router.post("/{name}/posts", response_model=PostFeedItem, status_code=status.HTTP_201_CREATED)

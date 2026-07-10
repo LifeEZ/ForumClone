@@ -36,3 +36,36 @@ jobs:
 
       - name: Pytest
         run: uv run pytest
+
+  compose-integration:
+    name: identity + content (vote → karma relay)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Start stack
+        run: docker compose up -d --build identity_db content_db identity content
+
+      - name: Wait for services
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8001/health && curl -sf http://localhost:8002/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Services did not become healthy" >&2
+          docker compose logs identity content
+          exit 1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Integration tests
+        working-directory: tests/integration
+        run: |
+          uv sync
+          uv run pytest -v

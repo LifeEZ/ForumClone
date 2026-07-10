@@ -32,8 +32,10 @@ def create_app() -> FastAPI:
     )
 
     from app.api.router import api_router
+    from app.api.routes.internal import router as internal_router
 
     app.include_router(api_router, prefix="/api/v1")
+    app.include_router(internal_router)  # mounted at /internal — not the public API prefix
 
     @app.get("/health", tags=["health"])
     async def health() -> dict[str, str]:

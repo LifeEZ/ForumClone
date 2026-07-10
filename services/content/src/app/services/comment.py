@@ -34,11 +34,14 @@ class MaxCommentDepthError(Exception):
 async def list_comments_for_post(
     session: AsyncSession,
     post_id: str,
+    *,
+    viewer_id: str | None = None,
 ) -> list[CommentResponse]:
     """Return the comment tree for a post.
 
     Top-level comments are newest-first; replies within a thread are oldest-first
     so a discussion reads top-to-bottom. Built in two queries + in-memory assembly.
+    When ``viewer_id`` is set, the viewer's vote on each comment is attached.
     """
     result = await session.execute(
         select(Comment)
@@ -47,14 +50,21 @@ async def list_comments_for_post(
     )
     rows = list(result.scalars().all())
 
+    votes_by_id: dict[str, int] = {}
+    if viewer_id is not None:
+        from app.services.vote import get_user_votes
+
+        votes_by_id = await get_user_votes(session, viewer_id, "comment", [r.id for r in rows])
+
     by_id: dict[str, CommentResponse] = {}
     top_level: list[CommentResponse] = []
     children_by_parent: dict[str, list[Comment]] = {}
 
     for row in rows:
         if row.parent_id is None:
-            top_level.append(CommentResponse.from_comment(row))
-            by_id[row.id] = top_level[-1]
+            cr = CommentResponse.from_comment(row, user_vote=votes_by_id.get(row.id, 0))
+            top_level.append(cr)
+            by_id[row.id] = cr
         else:
             children_by_parent.setdefault(row.parent_id, []).append(row)
 
@@ -62,7 +72,8 @@ async def list_comments_for_post(
     # so each parent's replies end up oldest-first.
     def attach(parent: CommentResponse) -> None:
         replies = [
-            CommentResponse.from_comment(child) for child in children_by_parent.get(parent.id, [])
+            CommentResponse.from_comment(child, user_vote=votes_by_id.get(child.id, 0))
+            for child in children_by_parent.get(parent.id, [])
         ]
         for reply in replies:
             by_id[reply.id] = reply

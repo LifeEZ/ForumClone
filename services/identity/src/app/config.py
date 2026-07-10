@@ -18,6 +18,10 @@ class Settings(BaseSettings):
 
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
+
+    # Shared secret guarding the internal /internal/karma endpoint (ADR-0003).
+    internal_token: str = ""
+
     debug: bool = False
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 

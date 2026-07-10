@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -6,12 +6,24 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import app.models  # noqa: F401
 from app.config import settings
-from app.database import engine
+from app.database import async_session_factory, engine
+from app.karma_relay import start_relay
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    stop_relay: Callable[[], Awaitable[None]] | None = None
+    if settings.karma_relay_enabled and settings.internal_token:
+        stop_relay = start_relay(
+            async_session_factory,
+            identity_url=settings.identity_url,
+            internal_token=settings.internal_token,
+            interval_seconds=settings.karma_relay_interval_seconds,
+            batch_size=settings.karma_relay_batch_size,
+        )
     yield
+    if stop_relay is not None:
+        await stop_relay()
     await engine.dispose()
 
 

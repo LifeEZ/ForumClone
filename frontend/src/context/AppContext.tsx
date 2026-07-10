@@ -165,7 +165,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const votePost = (_postId: string, _vote: 1 | -1 | 0) => {
-    // Wired in slice 7; per-view local state handles display until then.
+    // Voting is handled in PostCard / PostDetailView via lib/api castVote.
+    // Kept as a no-op so the shell context shape stays stable.
   };
 
   const addPost = (

@@ -55,7 +55,7 @@ graph TD
 5. **Create community** — any logged-in user; creator auto-joins as first member
 6. **Create text post** — title + optional body; **must be a member** of the community
 7. **Comments** — comment and nested reply, up to **10 levels** deep
-8. **Votes** — upvote/downvote posts and comments; **live karma** shown next to usernames
+8. **Votes** — upvote/downvote posts and comments; **karma shown on the logged-in user's nav only** (not next to every author — see [ADR-0004](./adr/0004-karma-display-nav-only.md); karma itself stays eventually consistent via [ADR-0003](./adr/0003-karma-via-outbox-and-relay.md))
 9. **Delete** — author deletes own post/comment → `[deleted]` placeholder; thread structure preserved
 
 ## Deferred to v2
@@ -74,7 +74,7 @@ graph TD
 | Access | Public read; auth required for vote, comment, post, join, create community |
 | Feeds | Guests → global; members → home (joined only); **newest-first** everywhere |
 | Membership | Required to post in a community |
-| Karma | Updated when votes change; displayed on posts/comments only (no profile page) |
+| Karma | Updated when votes change (eventual, via outbox→Identity event — [ADR-0003](./adr/0003-karma-via-outbox-and-relay.md)); shown on the logged-in user's nav only, not next to post/comment authors ([ADR-0004](./adr/0004-karma-display-nav-only.md)) |
 | Comments | Max depth 10; visual indent caps ~4 levels in UI |
 
 ## Seed content
@@ -130,8 +130,8 @@ Each slice ships API + UI + tests before moving on. Slices 1-2 are complete as a
 | 3 | Join / leave + home feed logic | Personalization works (Content, claims-based) | ✅ |
 | 4 | Create community | New `/c/...` exists (Content, author snapshot) | ✅ |
 | 5 | Create text post | User publishes content (Content, no user FK) | ✅ |
-| 6 | Comments + replies | Threads work (Content) | ⬜ |
-| 7 | Votes + karma | Engagement works (score local to Content; karma → Identity via event) | ⬜ |
+| 6 | Comments + replies | Threads work (Content) | ✅ |
+| 7 | Votes + karma | Engagement works (score local to Content; karma → Identity via event) | ✅ |
 | 8 | CI, seed polish, README | Production-shaped (per-service CI matrix) | ⬜ |
 | 9 | Deploy | Live URL | ⬜ |
 

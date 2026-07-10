@@ -70,4 +70,14 @@ Identity and content need a database and run their migrations with `uv run alemb
 
 ## Status
 
-Slices 1-5 are implemented: guest browsing, full auth, join/leave with personalized home feed, create-community (creator auto-joins as first member), and create text post (member-only, author snapshot from JWT). Commenting and voting (slices 6-7) are not wired to the backend yet.
+Slices 1–7 are implemented: guest browsing, full auth, join/leave with personalized home feed, create-community, create text post, comments + replies, and votes with eventual karma (outbox relay from Content → Identity). Slice 8 (CI polish, seed, README) is next.
+
+**Cross-service smoke test** (vote → score → karma relay):
+
+```bash
+# bash
+./scripts/run-compose-integration.sh
+
+# PowerShell
+pwsh scripts/run-compose-integration.ps1
+```

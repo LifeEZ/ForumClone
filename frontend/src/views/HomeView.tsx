@@ -10,6 +10,7 @@ import { PostCard } from '@/components/PostCard';
 import { SortBar } from '@/components/SortBar';
 import {
   ApiError,
+  castVote,
   fetchCommunities,
   fetchGlobalPosts,
   fetchHomePosts,
@@ -132,8 +133,18 @@ export function HomeView() {
     };
   }, [user, authLoading, joinedCount]);
 
-  const handleVote = (postId: string, vote: 1 | -1 | 0) => {
-    setPosts((prev) => updatePostVote(prev, postId, vote));
+  const handleVote = async (postId: string, vote: 1 | -1 | 0) => {
+    if (!user) return;
+    const prev = posts;
+    setPosts(updatePostVote(prev, postId, vote));
+    try {
+      await castVote({ target_type: 'post', target_id: postId, value: vote });
+    } catch (err) {
+      setPosts(prev);
+      if (err instanceof ApiError && err.status === 401) {
+        // token refresh failed; leave rolled-back state
+      }
+    }
   };
 
   return (

@@ -5,6 +5,7 @@ import { ArrowBigUp, ArrowBigDown } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PollenBurst } from '@/components/PollenBurst';
 import { springBouncy } from '@/lib/motion';
+import { useAuth } from '@/context/AuthContext';
 
 interface VoteControlProps {
   upvotes: number;
@@ -23,8 +24,11 @@ export function VoteControl({
 }: VoteControlProps) {
   const score = upvotes - downvotes;
   const [pollenTrigger, setPollenTrigger] = useState(0);
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
 
   const handleUpvote = (e: React.MouseEvent) => {
+    if (!isLoggedIn) return;
     e.preventDefault();
     e.stopPropagation();
     const nextVote = userVote === 1 ? 0 : 1;
@@ -35,6 +39,7 @@ export function VoteControl({
   };
 
   const handleDownvote = (e: React.MouseEvent) => {
+    if (!isLoggedIn) return;
     e.preventDefault();
     e.stopPropagation();
     onVote(userVote === -1 ? 0 : -1);
@@ -49,12 +54,16 @@ export function VoteControl({
       <motion.button
         type="button"
         onClick={handleUpvote}
-        whileTap={{ scale: 0.9 }}
+        disabled={!isLoggedIn}
+        title={isLoggedIn ? undefined : 'Log in to vote'}
+        whileTap={isLoggedIn ? { scale: 0.9 } : undefined}
         transition={springBouncy}
         className={`relative overflow-visible p-1.5 rounded-full transition-colors ${
-          userVote === 1
-            ? 'text-vote-up bg-vote-up/10'
-            : 'text-forest-muted hover:bg-forest-surface-hover hover:text-vote-up'
+          !isLoggedIn
+            ? 'text-forest-muted/50 cursor-not-allowed'
+            : userVote === 1
+              ? 'text-vote-up bg-vote-up/10'
+              : 'text-forest-muted hover:bg-forest-surface-hover hover:text-vote-up'
         }`}
         aria-label="Upvote"
       >
@@ -98,12 +107,16 @@ export function VoteControl({
       <motion.button
         type="button"
         onClick={handleDownvote}
-        whileTap={{ scale: 0.9 }}
+        disabled={!isLoggedIn}
+        title={isLoggedIn ? undefined : 'Log in to vote'}
+        whileTap={isLoggedIn ? { scale: 0.9 } : undefined}
         transition={springBouncy}
         className={`p-1.5 rounded-full transition-colors ${
-          userVote === -1
-            ? 'text-vote-down bg-vote-down/10'
-            : 'text-forest-muted hover:bg-forest-surface-hover hover:text-vote-down'
+          !isLoggedIn
+            ? 'text-forest-muted/50 cursor-not-allowed'
+            : userVote === -1
+              ? 'text-vote-down bg-vote-down/10'
+              : 'text-forest-muted hover:bg-forest-surface-hover hover:text-vote-down'
         }`}
         aria-label="Downvote"
       >

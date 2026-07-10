@@ -348,3 +348,20 @@ export async function createComment(
     },
   );
 }
+
+export interface ApiVoteResponse {
+  target_type: 'post' | 'comment';
+  target_id: string;
+  value: number;
+}
+
+export async function castVote(payload: {
+  target_type: 'post' | 'comment';
+  target_id: string;
+  value: 1 | -1 | 0;
+}): Promise<ApiVoteResponse> {
+  return requestWithAuth<ApiVoteResponse>('/votes', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}

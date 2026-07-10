@@ -11,6 +11,7 @@ import { SortBar } from '@/components/SortBar';
 import { RemoteImage } from '@/components/RemoteImage';
 import {
   ApiError,
+  castVote,
   fetchCommunity,
   fetchCommunityPosts,
   joinCommunity,
@@ -146,8 +147,18 @@ export function CommunityView({ name }: { name: string }) {
     }
   };
 
-  const handleVote = (postId: string, vote: 1 | -1 | 0) => {
-    setPosts((prev) => updatePostVote(prev, postId, vote));
+  const handleVote = async (postId: string, vote: 1 | -1 | 0) => {
+    if (!authUser) return;
+    const prev = posts;
+    setPosts(updatePostVote(prev, postId, vote));
+    try {
+      await castVote({ target_type: 'post', target_id: postId, value: vote });
+    } catch (err) {
+      setPosts(prev);
+      if (err instanceof ApiError && err.status === 401) {
+        // token refresh failed; leave rolled-back state
+      }
+    }
   };
 
   if (!communityLoading && communityError === 'not_found') {

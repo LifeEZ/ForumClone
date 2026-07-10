@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MessageSquare, Share2, Bookmark } from 'lucide-react';
@@ -7,7 +8,8 @@ import { Post, Community } from '@/types';
 import { VoteControl } from '@/components/VoteControl';
 import { RemoteImage } from '@/components/RemoteImage';
 import { RelativeTime } from '@/components/RelativeTime';
-import { useAppContext } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
+import { ApiError, castVote } from '@/lib/api';
 
 interface PostCardProps {
   post: Post;
@@ -26,9 +28,47 @@ export function PostCard({
   onVote,
 }: PostCardProps) {
   const router = useRouter();
-  const { votePost } = useAppContext();
+  const { user: authUser } = useAuth();
 
-  const handleVote = onVote ?? ((vote) => votePost(post.id, vote));
+  // Local override used when no parent onVote is supplied (feed cards): the
+  // card owns its optimistic vote state and calls the API itself.
+  const [local, setLocal] = useState<{
+    upvotes: number;
+    downvotes: number;
+    userVote: 1 | -1 | 0;
+  } | null>(null);
+
+  const display = local ?? {
+    upvotes: post.upvotes,
+    downvotes: post.downvotes,
+    userVote: post.userVote,
+  };
+
+  const handleVote =
+    onVote ??
+    (async (vote: 1 | -1 | 0) => {
+      if (!authUser) return;
+      const prev = display;
+      let newUpvotes = prev.upvotes;
+      let newDownvotes = prev.downvotes;
+      if (prev.userVote === 1) newUpvotes--;
+      if (prev.userVote === -1) newDownvotes--;
+      if (vote === 1) newUpvotes++;
+      if (vote === -1) newDownvotes++;
+      setLocal({ upvotes: newUpvotes, downvotes: newDownvotes, userVote: vote });
+      try {
+        await castVote({ target_type: 'post', target_id: post.id, value: vote });
+      } catch (err) {
+        setLocal({
+          upvotes: prev.upvotes,
+          downvotes: prev.downvotes,
+          userVote: prev.userVote,
+        });
+        if (err instanceof ApiError && err.status === 401) {
+          // token refresh failed; rolled back
+        }
+      }
+    });
 
   const postHref =
     community != null ? `/c/${community.name}/posts/${post.id}` : `/`;
@@ -117,9 +157,9 @@ export function PostCard({
 
       <div className="flex items-center gap-2 sm:gap-4">
         <VoteControl
-          upvotes={post.upvotes}
-          downvotes={post.downvotes}
-          userVote={post.userVote}
+          upvotes={display.upvotes}
+          downvotes={display.downvotes}
+          userVote={display.userVote}
           onVote={handleVote}
           horizontal
         />

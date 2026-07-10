@@ -50,6 +50,7 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@identity_db:5432/identity_db
       CORS_ORIGINS: '["http://localhost:3000"]'
+      INTERNAL_TOKEN: hiver-internal-token-change-me
     ports:
       - "8001:8001"
 
@@ -66,6 +67,7 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@content_db:5432/content_db
       IDENTITY_URL: http://identity:8001
+      INTERNAL_TOKEN: hiver-internal-token-change-me
       CORS_ORIGINS: '["http://localhost:3000"]'
     ports:
       - "8002:8002"

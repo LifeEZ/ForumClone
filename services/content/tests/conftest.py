@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 import app.models.comment  # noqa: F401
 import app.models.community  # noqa: F401
 import app.models.membership  # noqa: F401
+import app.models.outbox  # noqa: F401
 import app.models.post  # noqa: F401
 import app.models.vote  # noqa: F401
 from app.database import Base

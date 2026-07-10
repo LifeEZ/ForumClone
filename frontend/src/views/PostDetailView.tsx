@@ -7,13 +7,14 @@ import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { PostCard } from '@/components/PostCard';
 import { CommentThread } from '@/components/CommentThread';
-import { ApiError, createComment, fetchComments, fetchCommunity, fetchPost } from '@/lib/api';
+import { ApiError, castVote, createComment, fetchComments, fetchCommunity, fetchPost } from '@/lib/api';
 import { fadeIn, fadeInDelayed } from '@/lib/motion';
 import {
   mapApiComment,
   mapApiCommunity,
   mapApiPost,
   mapAuthUser,
+  updateCommentVote,
   updatePostVote,
 } from '@/lib/mappers';
 import { Community, Comment, Post } from '@/types';
@@ -118,11 +119,18 @@ export function PostDetailView({ name, id }: { name: string; id: string }) {
     };
   }, [id]);
 
-  const handleVote = (vote: 1 | -1 | 0) => {
-    setPost((prev) => {
-      if (!prev) return prev;
-      return updatePostVote([prev], prev.id, vote)[0];
-    });
+  const handleVote = async (vote: 1 | -1 | 0) => {
+    if (!post || !authUser) return;
+    const prev = post;
+    setPost(updatePostVote([prev], prev.id, vote)[0]);
+    try {
+      await castVote({ target_type: 'post', target_id: prev.id, value: vote });
+    } catch (err) {
+      setPost(prev);
+      if (err instanceof ApiError && err.status === 401) {
+        // token refresh failed; leave rolled-back state
+      }
+    }
   };
 
   const insertReply = (
@@ -167,7 +175,7 @@ export function PostDetailView({ name, id }: { name: string; id: string }) {
     try {
       const created = await createComment(id, { content: commentContent });
       const mapped = mapApiComment(created);
-      // Top-level is newest-first, so prepend.
+      // Top-level is newest-first
       setComments((prev) => [mapped, ...prev]);
       setPost((prev) =>
         prev ? { ...prev, commentCount: prev.commentCount + 1 } : prev,
@@ -182,31 +190,18 @@ export function PostDetailView({ name, id }: { name: string; id: string }) {
     }
   };
 
-  const voteCommentRecursive = (
-    list: Comment[],
-    commentId: string,
-    vote: 1 | -1 | 0,
-  ): Comment[] => {
-    return list.map((c) => {
-      if (c.id === commentId) {
-        let newUpvotes = c.upvotes;
-        let newDownvotes = c.downvotes;
-        if (c.userVote === 1) newUpvotes--;
-        if (c.userVote === -1) newDownvotes--;
-        if (vote === 1) newUpvotes++;
-        if (vote === -1) newDownvotes++;
-        return { ...c, upvotes: newUpvotes, downvotes: newDownvotes, userVote: vote };
+  const handleCommentVote = async (commentId: string, vote: 1 | -1 | 0) => {
+    if (!authUser) return;
+    const prev = comments;
+    setComments(updateCommentVote(prev, commentId, vote));
+    try {
+      await castVote({ target_type: 'comment', target_id: commentId, value: vote });
+    } catch (err) {
+      setComments(prev);
+      if (err instanceof ApiError && err.status === 401) {
+        // token refresh failed; leave rolled-back state
       }
-      if (c.replies) {
-        return { ...c, replies: voteCommentRecursive(c.replies, commentId, vote) };
-      }
-      return c;
-    });
-  };
-
-  const handleCommentVote = (commentId: string, vote: 1 | -1 | 0) => {
-    // Local display only — wired to the API in slice 7.
-    setComments((prev) => voteCommentRecursive(prev, commentId, vote));
+    }
   };
 
   const loading = communityLoading || postLoading;

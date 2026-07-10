@@ -102,3 +102,30 @@ export function updatePostVote(
     };
   });
 }
+
+export function updateCommentVote(
+  comments: Comment[],
+  commentId: string,
+  vote: 1 | -1 | 0,
+): Comment[] {
+  return comments.map((c) => {
+    if (c.id === commentId) {
+      let newUpvotes = c.upvotes;
+      let newDownvotes = c.downvotes;
+      if (c.userVote === 1) newUpvotes--;
+      if (c.userVote === -1) newDownvotes--;
+      if (vote === 1) newUpvotes++;
+      if (vote === -1) newDownvotes++;
+      return {
+        ...c,
+        upvotes: newUpvotes,
+        downvotes: newDownvotes,
+        userVote: vote,
+      };
+    }
+    if (c.replies && c.replies.length > 0) {
+      return { ...c, replies: updateCommentVote(c.replies, commentId, vote) };
+    }
+    return c;
+  });
+}

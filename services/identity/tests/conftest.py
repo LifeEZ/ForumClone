@@ -5,6 +5,7 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+import app.models.processed_event  # noqa: F401
 import app.models.refresh_token  # noqa: F401
 import app.models.user  # noqa: F401
 from app.database import Base

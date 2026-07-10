@@ -44,6 +44,7 @@ class CommentResponse(BaseModel):
         cls,
         comment: "Comment",
         *,
+        user_vote: int = 0,
         replies: list["CommentResponse"] | None = None,
     ) -> "CommentResponse":
         author = AuthorResponse(
@@ -64,5 +65,6 @@ class CommentResponse(BaseModel):
             score=comment.score,
             created_at=comment.created_at,
             is_deleted=comment.is_deleted,
+            user_vote=user_vote,
             replies=replies or [],
         )
