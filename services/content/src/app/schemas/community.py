@@ -2,7 +2,9 @@ import re
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+COMMUNITY_DESCRIPTION_MAX_LENGTH = 500
 
 if TYPE_CHECKING:
     from app.models.community import Community
@@ -36,7 +38,7 @@ _SLUG_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 class CommunityCreate(BaseModel):
     name: str
     display_name: str
-    description: str | None = None
+    description: str | None = Field(default=None, max_length=COMMUNITY_DESCRIPTION_MAX_LENGTH)
     rules: list[dict] | None = None
 
     @field_validator("name")
@@ -60,7 +62,7 @@ class CommunityCreate(BaseModel):
 
 class CommunityUpdate(BaseModel):
     display_name: str | None = None
-    description: str | None = None
+    description: str | None = Field(default=None, max_length=COMMUNITY_DESCRIPTION_MAX_LENGTH)
     rules: list[dict] | None = None
 
 

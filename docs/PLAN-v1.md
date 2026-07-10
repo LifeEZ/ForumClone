@@ -27,13 +27,13 @@ graph TD
   GW --> CT[Content service]
   ID --> IDDB[(identity_db)]
   CT --> CTDB[(content_db)]
-  GW -. fetch public key .-> ID
+  CT -. fetch public key .-> ID
   GW -. rate limit .-> RD[(Redis)]
 ```
 
 | Service | Owns | Notes |
 |---------|------|-------|
-| **Gateway** | Routing, CORS, JWT verify, rate limiting | Single public entry; frontend base URL unchanged |
+| **Gateway** | Routing, CORS, rate limiting | Single public entry; does NOT verify JWT — each downstream service verifies its own tokens (zero-trust) |
 | **Identity** | `users`, `refresh_tokens`, `karma` | Issues **RS256** JWTs (`sub` + `username` claims, `kid` header); exposes JWKS |
 | **Content** | `communities`, `memberships`, `posts`, `comments`, `votes` | Trusts JWT claims; no live call to Identity on the hot path |
 
@@ -41,7 +41,7 @@ graph TD
 
 - **No cross-service FKs.** Content stores `author_id`/`creator_id`/`user_id` as plain strings, not foreign keys into `users`.
 - **Author snapshot.** `posts`/`comments` carry `author_username` (+ optional `author_avatar_url`), copied from JWT claims at write time — no join to `users`.
-- **Stateless auth.** Identity signs with a private key; Gateway/Content verify with the public key. Content decodes the token into a lightweight `CurrentUser` (no DB lookup).
+- **Stateless auth.** Identity signs with a private key; Content verifies with the public key (resolved from Identity's JWKS, TTL-cached). The Gateway routes and rate-limits but does not verify the token. Content decodes the token into a lightweight `CurrentUser` (no DB lookup).
 - **Eventual karma.** Votes update per-item `score` in Content locally; a "vote-applied" event (outbox) updates `user.karma` in Identity.
 - **Repo:** monorepo — `services/{identity,content,gateway}` + `frontend/`.
 - **Deliberately skipped:** Nginx (gateway proxies), Kafka (outbox suffices), GraphQL (unrelated). Redis added only for gateway rate limiting.
@@ -88,7 +88,7 @@ Loaded for demo; not login-able.
 | Comments | 1–2 threads on one post |
 | Authors | 3 display-only seed users |
 
-## Engineering (light D)
+## Engineering
 
 **In v1**
 

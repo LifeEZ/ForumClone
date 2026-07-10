@@ -159,8 +159,12 @@ export function CreateCommunityView() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="What is this community about?"
+            maxLength={500}
             className={`${inputClass} resize-none min-h-[100px]`}
           />
+          <p className="text-xs text-forest-muted mt-1.5">
+            Up to 500 characters.
+          </p>
         </div>
 
         {formError && (

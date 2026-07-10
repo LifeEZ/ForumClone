@@ -108,6 +108,9 @@ export function SubmitPostView({ name }: { name: string }) {
             className="w-full bg-forest-bg border border-forest-border rounded-xl p-4 text-lg font-semibold text-forest-text placeholder:text-forest-muted focus:outline-none focus:border-forest-accent focus:ring-1 focus:ring-forest-accent"
             required
           />
+          <p className="text-xs text-forest-muted mt-1.5">
+            Up to 300 characters.
+          </p>
         </div>
 
         <div className="mb-4">

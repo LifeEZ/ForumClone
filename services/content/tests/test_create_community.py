@@ -156,3 +156,19 @@ async def test_create_community_valid_names_accepted(
         headers=auth_headers,
     )
     assert resp.status_code == 201, resp.text
+
+
+async def test_create_community_description_too_long_returns_422(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+) -> None:
+    resp = await client.post(
+        "/api/v1/communities",
+        json={
+            "name": "films",
+            "display_name": "Films",
+            "description": "x" * 501,
+        },
+        headers=auth_headers,
+    )
+    assert resp.status_code == 422

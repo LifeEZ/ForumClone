@@ -120,7 +120,6 @@ async function refreshStoredTokens(): Promise<TokenPair> {
   return refreshInFlight;
 }
 
-/** Authenticated request — refreshes access token once on 401, then retries. */
 async function requestWithAuth<T>(
   path: string,
   options: RequestInit = {},

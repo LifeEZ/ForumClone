@@ -6,7 +6,9 @@ The build is stopped cleanly at the **end of slice 2**: auth and all read feeds 
 
 We split along the one clean seam — identity vs content — into a **Gateway**, an **Identity** service (`users`, `refresh_tokens`, `karma`), and a **Content** service (`communities`, `memberships`, `posts`, `comments`, `votes`), each with its own database, in a monorepo (`services/{identity,content,gateway}`).
 
-To make services independent we change three things from [ADR-0001](./0001-jwt-access-and-refresh-tokens.md): JWTs move from **HS256 (shared secret) to RS256 (Identity signs with a private key; Gateway and Content verify with the public key)**; the access token now carries the `username` claim so Content authenticates requests from the token alone with **no database lookup**; and Content drops foreign keys into `users`, instead storing the author's id and a **denormalized `author_username` snapshot** copied from the token at write time. Karma becomes **eventually consistent** — Content keeps per-item `score` locally and emits a "vote-applied" event (outbox) that Identity consumes to update `user.karma`.
+To make services independent we change three things from [ADR-0001](./0001-jwt-access-and-refresh-tokens.md): JWTs move from **HS256 (shared secret) to RS256 (Identity signs with a private key; downstream services verify with the public key)**; the access token now carries the `username` claim so Content authenticates requests from the token alone with **no database lookup**; and Content drops foreign keys into `users`, instead storing the author's id and a **denormalized `author_username` snapshot** copied from the token at write time.
+
+**The Gateway does not verify the JWT.** It is a routing + CORS + rate-limiting proxy only; each downstream service verifies the token itself (Content resolves Identity's public key from its JWKS, TTL-cached with on-demand refetch on `kid` miss). This is a deliberate zero-trust choice: services authenticate independently rather than blindly trusting the gateway, so a compromised or misconfigured gateway cannot forge identity. The cost is one signature verification per downstream request — acceptable given the cached JWKS, and the gateway is on the hot path for routing regardless. Karma becomes **eventually consistent** — Content keeps per-item `score` locally and emits a "vote-applied" event (outbox) that Identity consumes to update `user.karma`.
 
 **Considered options**
 
@@ -21,7 +23,7 @@ To make services independent we change three things from [ADR-0001](./0001-jwt-a
 **Consequences**
 
 - Three deployables (gateway + 2 services) and two databases (`identity_db`, `content_db`); seed populates both. Three cold-start surfaces on free tiers — acceptable for a demo.
-- Auth is stateless across services; rotating the signing key is a deploy-time concern (publish new public key before old tokens are issued against the new private key).
+- Auth is stateless across services; the Gateway routes and rate-limits but does not verify tokens, while Content verifies each request against Identity's JWKS (TTL-cached). Rotating the signing key is a deploy-time concern (publish new public key before old tokens are issued against the new private key).
 - The `author_username` snapshot can go stale if a user renames; v1 has no rename, so this is deferred (a future event from Identity would refresh snapshots).
 - Karma is eventually consistent — it may briefly lag a vote. Acceptable; `score` (the per-item number users actually watch) is always immediate.
 - Redis is added solely for gateway rate limiting; it is the one deliberate piece of extra infrastructure and has a concrete job.

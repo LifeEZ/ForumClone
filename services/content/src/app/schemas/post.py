@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+POST_TITLE_MAX_LENGTH = 300
 
 from app.schemas.user import AuthorResponse
 
@@ -16,16 +18,34 @@ def score_to_vote_counts(score: int) -> tuple[int, int]:
 
 
 class PostCreate(BaseModel):
-    title: str
+    title: str = Field(min_length=1, max_length=POST_TITLE_MAX_LENGTH)
     community_id: str
     post_type: Literal["text", "link", "image"] = "text"
     content: str | None = None
     url: str | None = None
 
+    @field_validator("title")
+    @classmethod
+    def _validate_title(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("title must not be empty")
+        return stripped
+
 
 class PostUpdate(BaseModel):
-    title: str | None = None
+    title: str | None = Field(default=None, min_length=1, max_length=POST_TITLE_MAX_LENGTH)
     content: str | None = None
+
+    @field_validator("title")
+    @classmethod
+    def _validate_title(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("title must not be empty")
+        return stripped
 
 
 class PostResponse(BaseModel):
