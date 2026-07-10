@@ -5,29 +5,75 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { fadeUp } from '@/lib/motion';
 import { useAuth } from '@/context/AuthContext';
-import { useAppContext } from '@/context/AppContext';
 import { CommunitiesStrip } from '@/components/CommunitiesStrip';
 import { PostCard } from '@/components/PostCard';
 import { SortBar } from '@/components/SortBar';
 import {
   ApiError,
+  fetchCommunities,
   fetchGlobalPosts,
   fetchHomePosts,
+  fetchJoinedCommunities,
   getStoredTokens,
 } from '@/lib/api';
-import { mapApiPost, updatePostVote } from '@/lib/mappers';
-import { Post } from '@/types';
+import { mapApiCommunity, mapApiPost, updatePostVote } from '@/lib/mappers';
+import { Community, Post } from '@/types';
 
 export function HomeView() {
   const { user, isLoading: authLoading } = useAuth();
-  const { communities } = useAppContext();
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [joinedCount, setJoinedCount] = useState(0);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showPersonalizationBanner, setShowPersonalizationBanner] =
     useState(false);
 
-  const joinedCount = communities.filter((c) => c.isJoined).length;
+  useEffect(() => {
+    if (authLoading) return;
+
+    let cancelled = false;
+
+    async function loadCommunities() {
+      try {
+        const data = await fetchCommunities();
+        if (cancelled) return;
+
+        let joinedIds = new Set<string>();
+        if (user) {
+          const { accessToken } = getStoredTokens();
+          if (accessToken) {
+            try {
+              const joined = await fetchJoinedCommunities();
+              if (cancelled) return;
+              joinedIds = new Set(joined.map((j) => j.id));
+              setJoinedCount(joined.length);
+            } catch {
+              setJoinedCount(0);
+            }
+          } else {
+            setJoinedCount(0);
+          }
+        } else {
+          setJoinedCount(0);
+        }
+
+        setCommunities(
+          data.map((c) => mapApiCommunity(c, joinedIds.has(c.id))),
+        );
+      } catch {
+        if (!cancelled) {
+          setCommunities([]);
+          setJoinedCount(0);
+        }
+      }
+    }
+
+    void loadCommunities();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, authLoading]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -57,8 +103,7 @@ export function HomeView() {
             return;
           }
 
-          const hasJoins = joinedCount > 0;
-          if (!hasJoins) {
+          if (joinedCount === 0) {
             const globalData = await fetchGlobalPosts({ limit: 20 });
             if (cancelled) return;
             setPosts(globalData.map(mapApiPost));
@@ -123,7 +168,9 @@ export function HomeView() {
       ) : posts.length === 0 ? (
         <div className="text-center py-20 bg-forest-surface/80 border border-forest-border/40 rounded-2xl shadow-md shadow-black/10">
           <h2 className="font-display text-xl font-semibold text-forest-text mb-2">
-            {user && joinedCount > 0 ? 'Nothing from your communities' : 'Nothing here yet'}
+            {user && joinedCount > 0
+              ? 'Nothing from your communities'
+              : 'Nothing here yet'}
           </h2>
           <p className="text-forest-muted">
             {user && joinedCount > 0

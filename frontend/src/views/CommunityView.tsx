@@ -3,48 +3,75 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { fadeIn, fadeUp } from '@/lib/motion';
+import { useAuth } from '@/context/AuthContext';
 import { useAppContext } from '@/context/AppContext';
 import { CommunityPostActions } from '@/components/CommunityPostActions';
 import { PostCard } from '@/components/PostCard';
 import { SortBar } from '@/components/SortBar';
 import { RemoteImage } from '@/components/RemoteImage';
-import { ApiError, fetchCommunityPosts } from '@/lib/api';
-import { getCommunityByName, mapApiPost, updatePostVote } from '@/lib/mappers';
-import { Post } from '@/types';
+import {
+  ApiError,
+  fetchCommunity,
+  fetchCommunityPosts,
+  joinCommunity,
+  leaveCommunity,
+} from '@/lib/api';
+import { mapApiCommunity, mapApiPost, mapAuthUser, updatePostVote } from '@/lib/mappers';
+import { Community, Post } from '@/types';
 
 export function CommunityView({ name }: { name: string }) {
-  const {
-    communities,
-    communitiesLoading,
-    toggleJoinCommunity,
-    joinError,
-    user,
-  } = useAppContext();
-  const community = getCommunityByName(communities, name);
+  const { user: authUser, isLoading: authLoading } = useAuth();
+  const user = authUser ? mapAuthUser(authUser) : null;
+  const { refreshCommunities } = useAppContext();
 
+  const [community, setCommunity] = useState<Community | null>(null);
+  const [communityLoading, setCommunityLoading] = useState(true);
+  const [communityError, setCommunityError] = useState<string | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [postsError, setPostsError] = useState<string | null>(null);
+  const [joinError, setJoinError] = useState<string | null>(null);
   const [joinLoading, setJoinLoading] = useState(false);
 
-  const handleJoin = async () => {
-    if (!community || joinLoading) return;
-    setJoinLoading(true);
-    try {
-      await toggleJoinCommunity(community.id);
-    } catch {
-      // joinError is set in AppContext
-    } finally {
-      setJoinLoading(false);
+  useEffect(() => {
+    if (authLoading) return;
+
+    let cancelled = false;
+
+    async function loadCommunity() {
+      setCommunityLoading(true);
+      setCommunityError(null);
+      try {
+        const data = await fetchCommunity(name, { authenticated: !!authUser });
+        if (cancelled) return;
+        setCommunity(mapApiCommunity(data));
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof ApiError && err.status === 404) {
+          setCommunity(null);
+          setCommunityError('not_found');
+        } else {
+          setCommunityError(
+            err instanceof ApiError ? err.message : 'Could not load community',
+          );
+        }
+      } finally {
+        if (!cancelled) setCommunityLoading(false);
+      }
     }
-  };
+
+    void loadCommunity();
+    return () => {
+      cancelled = true;
+    };
+  }, [name, authUser, authLoading]);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadPosts() {
-      setLoading(true);
-      setError(null);
+      setPostsLoading(true);
+      setPostsError(null);
       try {
         const data = await fetchCommunityPosts(name, { limit: 20 });
         if (cancelled) return;
@@ -52,14 +79,14 @@ export function CommunityView({ name }: { name: string }) {
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 404) {
-          setError('not_found');
+          setPostsError('not_found');
         } else {
-          setError(
+          setPostsError(
             err instanceof ApiError ? err.message : 'Could not load posts',
           );
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setPostsLoading(false);
       }
     }
 
@@ -69,11 +96,61 @@ export function CommunityView({ name }: { name: string }) {
     };
   }, [name]);
 
+  const handleJoin = async () => {
+    if (!community || joinLoading) return;
+
+    setJoinLoading(true);
+    setJoinError(null);
+
+    const wasJoined = community.isJoined;
+    const previousMemberCount = community.memberCount;
+
+    setCommunity((prev) =>
+      prev
+        ? {
+            ...prev,
+            isJoined: !wasJoined,
+            memberCount: wasJoined
+              ? prev.memberCount - 1
+              : prev.memberCount + 1,
+          }
+        : prev,
+    );
+
+    try {
+      if (wasJoined) {
+        await leaveCommunity(community.name);
+      } else {
+        await joinCommunity(community.name);
+      }
+      const updated = await fetchCommunity(community.name, {
+        authenticated: true,
+      });
+      setCommunity(mapApiCommunity(updated));
+      await refreshCommunities();
+    } catch (err) {
+      setCommunity((prev) =>
+        prev
+          ? {
+              ...prev,
+              isJoined: wasJoined,
+              memberCount: previousMemberCount,
+            }
+          : prev,
+      );
+      const message =
+        err instanceof ApiError ? err.message : 'Could not update membership';
+      setJoinError(message);
+    } finally {
+      setJoinLoading(false);
+    }
+  };
+
   const handleVote = (postId: string, vote: 1 | -1 | 0) => {
     setPosts((prev) => updatePostVote(prev, postId, vote));
   };
 
-  if (!community && !communitiesLoading && communities.length > 0) {
+  if (!communityLoading && communityError === 'not_found') {
     return (
       <div className="text-center py-20">
         <h2 className="text-2xl font-bold text-forest-text">
@@ -83,10 +160,21 @@ export function CommunityView({ name }: { name: string }) {
     );
   }
 
-  if (!community) {
+  if (communityLoading || !community) {
     return (
       <div className="text-center py-20 text-forest-muted">
         Loading community…
+      </div>
+    );
+  }
+
+  if (communityError) {
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-2xl font-bold text-forest-text mb-2">
+          Could not load community
+        </h2>
+        <p className="text-forest-muted">{communityError}</p>
       </div>
     );
   }
@@ -156,16 +244,16 @@ export function CommunityView({ name }: { name: string }) {
 
       <SortBar />
 
-      {loading ? (
+      {postsLoading ? (
         <div className="text-center py-20 text-forest-muted">
           Gathering posts…
         </div>
-      ) : error && error !== 'not_found' ? (
+      ) : postsError && postsError !== 'not_found' ? (
         <div className="text-center py-20 bg-forest-surface/80 border border-forest-border/40 rounded-2xl shadow-md shadow-black/10">
           <h2 className="font-display text-xl font-semibold text-forest-text mb-2">
             Could not load posts
           </h2>
-          <p className="text-forest-muted">{error}</p>
+          <p className="text-forest-muted">{postsError}</p>
         </div>
       ) : posts.length === 0 ? (
         <div className="text-center py-20 bg-forest-surface/80 border border-forest-border/40 rounded-2xl shadow-md shadow-black/10">

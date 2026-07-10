@@ -2,12 +2,22 @@ import { Community, Post, User } from '@/types';
 import {
   ApiCommunity,
   ApiPostFeedItem,
+  ApiUser,
   ApiUserPublic,
 } from '@/lib/api';
 import {
   DEFAULT_COMMUNITY_AVATAR,
   DEFAULT_COMMUNITY_BANNER,
 } from '@/lib/constants';
+
+export function mapAuthUser(api: ApiUser): User {
+  return {
+    id: api.id,
+    username: api.username,
+    avatarUrl: api.avatar_url,
+    karma: api.karma,
+  };
+}
 
 export function mapApiUserPublic(api: ApiUserPublic): User {
   return {

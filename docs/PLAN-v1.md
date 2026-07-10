@@ -135,6 +135,12 @@ Each slice ships API + UI + tests before moving on. Slices 1-2 are complete as a
 | 8 | CI, seed polish, README | Production-shaped (per-service CI matrix) |
 | 9 | Deploy | Live URL |
 
+## Frontend conventions
+
+Page views use **`useAuth()` + `lib/api.ts`** with local state — not `AppContext`. See [`frontend/CONTEXT.md`](../frontend/CONTEXT.md).
+
+`AppContext` is shell-only (nav/sidebars) and still holds **mock comments** until slice 6; that path needs a dedicated cleanup when comments ship.
+
 ## Frontend routes
 
 | Route | Purpose |

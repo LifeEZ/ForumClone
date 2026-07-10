@@ -4,34 +4,61 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import { useAppContext } from '@/context/AppContext';
 import { PostCard } from '@/components/PostCard';
 import { CommentThread } from '@/components/CommentThread';
-import { ApiError, fetchPost } from '@/lib/api';
+import { ApiError, fetchCommunity, fetchPost } from '@/lib/api';
 import { fadeIn, fadeInDelayed } from '@/lib/motion';
-import {
-  getCommunityByName,
-  mapApiPost,
-  updatePostVote,
-} from '@/lib/mappers';
-import { Post } from '@/types';
+import { mapApiCommunity, mapApiPost, mapAuthUser, updatePostVote } from '@/lib/mappers';
+import { Community, Post } from '@/types';
 
 export function PostDetailView({ name, id }: { name: string; id: string }) {
   const router = useRouter();
-  const { communities, comments, user } = useAppContext();
+  const { user: authUser, isLoading: authLoading } = useAuth();
+  const user = authUser ? mapAuthUser(authUser) : null;
+  const { comments } = useAppContext();
 
+  const [community, setCommunity] = useState<Community | null>(null);
+  const [communityLoading, setCommunityLoading] = useState(true);
   const [post, setPost] = useState<Post | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [postLoading, setPostLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const community = getCommunityByName(communities, name);
   const postComments = comments[id] || [];
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    let cancelled = false;
+
+    async function loadCommunity() {
+      setCommunityLoading(true);
+      try {
+        const data = await fetchCommunity(name, { authenticated: !!authUser });
+        if (cancelled) return;
+        setCommunity(mapApiCommunity(data));
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof ApiError && err.status === 404) {
+          setCommunity(null);
+        }
+      } finally {
+        if (!cancelled) setCommunityLoading(false);
+      }
+    }
+
+    void loadCommunity();
+    return () => {
+      cancelled = true;
+    };
+  }, [name, authUser, authLoading]);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadPost() {
-      setLoading(true);
+      setPostLoading(true);
       setError(null);
       try {
         const data = await fetchPost(id);
@@ -47,7 +74,7 @@ export function PostDetailView({ name, id }: { name: string; id: string }) {
           );
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setPostLoading(false);
       }
     }
 
@@ -64,13 +91,20 @@ export function PostDetailView({ name, id }: { name: string; id: string }) {
     });
   };
 
+  const loading = communityLoading || postLoading;
+
   if (loading) {
     return (
       <div className="text-center py-20 text-forest-muted">Loading post…</div>
     );
   }
 
-  if (error === 'not_found' || !post || !community || post.communityId !== community.id) {
+  if (
+    error === 'not_found' ||
+    !post ||
+    !community ||
+    post.communityId !== community.id
+  ) {
     return (
       <div className="text-center py-20">
         <h2 className="text-2xl font-bold text-forest-text">Post not found</h2>

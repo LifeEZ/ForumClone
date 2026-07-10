@@ -17,7 +17,7 @@ Service-unique terms only — not duplicates of the shared glossary. Created laz
 | [`services/content/CONTEXT.md`](services/content/CONTEXT.md) | Content-service terms (Membership, …) |
 | `services/identity/CONTEXT.md` | *(not yet — created when Identity-specific terms arise)* |
 | `services/gateway/CONTEXT.md` | *(not yet — created when Gateway-specific terms arise)* |
-| `frontend/CONTEXT.md` | *(not yet — created when frontend-specific terms arise)* |
+| `frontend/CONTEXT.md` | Frontend data-fetching pattern, AppContext scope, cleanup backlog |
 
 ## Architecture decisions
 
