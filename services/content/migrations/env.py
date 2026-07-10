@@ -5,11 +5,11 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-import app.models.comment
-import app.models.community
-import app.models.membership
-import app.models.post
-import app.models.vote
+import app.models.comment  # noqa: F401
+import app.models.community  # noqa: F401
+import app.models.membership  # noqa: F401
+import app.models.post  # noqa: F401
+import app.models.vote  # noqa: F401
 from app.config import settings
 from app.database import Base
 

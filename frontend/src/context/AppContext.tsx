@@ -84,7 +84,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!accessToken) return;
 
     try {
-      const joined = await fetchJoinedCommunities(accessToken);
+      const joined = await fetchJoinedCommunities();
       const joinedIds = new Set(joined.map((j) => j.id));
       const joinedById = new Map(joined.map((j) => [j.id, j]));
       setCommunities((prev) =>
@@ -117,7 +117,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const { accessToken } = getStoredTokens();
           if (accessToken) {
             try {
-              const joined = await fetchJoinedCommunities(accessToken);
+              const joined = await fetchJoinedCommunities();
               joinedIds = new Set(joined.map((j) => j.id));
             } catch {
               // Fall back to unjoined state for all communities.
@@ -177,11 +177,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     try {
       if (wasJoined) {
-        await leaveCommunity(accessToken, community.name);
+        await leaveCommunity(community.name);
       } else {
-        await joinCommunity(accessToken, community.name);
+        await joinCommunity(community.name);
       }
-      const updated = await fetchCommunity(community.name, accessToken);
+      const updated = await fetchCommunity(community.name, { authenticated: true });
       setCommunities((prev) =>
         prev.map((c) =>
           c.id === communityId ? mapApiCommunity(updated) : c,

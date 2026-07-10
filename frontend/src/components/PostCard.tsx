@@ -13,6 +13,8 @@ interface PostCardProps {
   post: Post;
   community?: Community;
   isDetail?: boolean;
+  /** Show community avatar + name in feed cards. Hide on community page. */
+  showCommunity?: boolean;
   onVote?: (vote: 1 | -1 | 0) => void;
 }
 
@@ -20,6 +22,7 @@ export function PostCard({
   post,
   community,
   isDetail = false,
+  showCommunity = true,
   onVote,
 }: PostCardProps) {
   const router = useRouter();
@@ -53,51 +56,29 @@ export function PostCard({
           : 'shadow-md shadow-black/10'
       }`}
     >
-      {community && !isDetail && (
-        <Link
-          href={`/c/${community.name}`}
-          className="flex items-center gap-3 mb-3 -mt-1 group"
-        >
-          <RemoteImage
-            src={community.avatarUrl}
-            alt={community.displayName}
-            width={32}
-            height={32}
-            className="w-8 h-8 rounded-full object-cover ring-2 ring-forest-border group-hover:ring-forest-accent/60 transition-all"
-          />
-          <div className="min-w-0">
-            <p className="font-display text-sm font-semibold text-forest-text group-hover:text-forest-accent transition-colors truncate">
+      <div className="flex items-center gap-2 mb-3 text-sm min-w-0 flex-wrap">
+        {community && showCommunity && (
+          <Link
+            href={`/c/${community.name}`}
+            className="flex items-center gap-2 shrink-0 group"
+            onClick={(e) => !isDetail && e.stopPropagation()}
+          >
+            <RemoteImage
+              src={community.avatarUrl}
+              alt={community.displayName}
+              width={32}
+              height={32}
+              className="w-8 h-8 shrink-0 rounded-full object-cover ring-2 ring-forest-border group-hover:ring-forest-accent/60 transition-all"
+            />
+            <span className="font-display text-sm font-semibold text-forest-text group-hover:text-forest-accent transition-colors">
               {community.displayName}
-            </p>
-            <p className="text-xs text-forest-muted">c/{community.name}</p>
-          </div>
-        </Link>
-      )}
-
-      <div className="flex items-center gap-2 mb-3 text-sm">
-        {community && isDetail && (
-          <>
-            <Link
-              href={`/c/${community.name}`}
-              className="flex items-center gap-2 group"
-            >
-              <RemoteImage
-                src={community.avatarUrl}
-                alt={community.displayName}
-                width={32}
-                height={32}
-                className="w-8 h-8 rounded-full object-cover"
-              />
-              <span className="font-display font-semibold text-forest-text group-hover:underline">
-                c/{community.name}
-              </span>
-            </Link>
-            <span className="text-forest-muted">•</span>
-          </>
+            </span>
+          </Link>
         )}
-        <span className="text-forest-muted">
-          {post.author.username}
-        </span>
+        {community && showCommunity && (
+          <span className="text-forest-muted">•</span>
+        )}
+        <span className="text-forest-muted">{post.author.username}</span>
         <span className="text-forest-muted">•</span>
         <span className="text-forest-muted">
           <RelativeTime date={post.createdAt} /> ago

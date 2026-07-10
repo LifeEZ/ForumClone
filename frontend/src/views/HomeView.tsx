@@ -49,7 +49,7 @@ export function HomeView() {
             return;
           }
 
-          const homeData = await fetchHomePosts(accessToken, { limit: 20 });
+          const homeData = await fetchHomePosts({ limit: 20 });
           if (cancelled) return;
 
           if (homeData.length > 0) {

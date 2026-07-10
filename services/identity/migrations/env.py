@@ -5,8 +5,8 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-import app.models.refresh_token
-import app.models.user
+import app.models.refresh_token  # noqa: F401
+import app.models.user  # noqa: F401
 from app.config import settings
 from app.database import Base
 

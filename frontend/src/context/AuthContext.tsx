@@ -9,14 +9,12 @@ import {
   type ReactNode,
 } from 'react';
 import {
-  ApiError,
   ApiUser,
   clearStoredTokens,
   fetchCurrentUser,
   getStoredTokens,
   loginUser,
   logoutUser,
-  refreshTokens,
   registerUser,
   storeTokens,
 } from '@/lib/api';
@@ -36,22 +34,11 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 async function loadUserFromStorage(): Promise<ApiUser | null> {
-  const { accessToken, refreshToken } = getStoredTokens();
+  const { accessToken } = getStoredTokens();
   if (!accessToken) return null;
 
   try {
-    return await fetchCurrentUser(accessToken);
-  } catch (err) {
-    if (!(err instanceof ApiError) || err.status !== 401 || !refreshToken) {
-      clearStoredTokens();
-      return null;
-    }
-  }
-
-  try {
-    const tokens = await refreshTokens(refreshToken!);
-    storeTokens(tokens);
-    return await fetchCurrentUser(tokens.access_token);
+    return await fetchCurrentUser();
   } catch {
     clearStoredTokens();
     return null;
@@ -78,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (username: string, password: string) => {
     const tokens = await loginUser({ username, password });
     storeTokens(tokens);
-    const me = await fetchCurrentUser(tokens.access_token);
+    const me = await fetchCurrentUser();
     setUser(me);
   }, []);
 
@@ -86,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (username: string, email: string, password: string) => {
       const tokens = await registerUser({ username, email, password });
       storeTokens(tokens);
-      const me = await fetchCurrentUser(tokens.access_token);
+      const me = await fetchCurrentUser();
       setUser(me);
     },
     [],

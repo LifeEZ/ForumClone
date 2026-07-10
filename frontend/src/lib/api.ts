@@ -98,6 +98,49 @@ async function request<T>(
   return (await resp.json()) as T;
 }
 
+let refreshInFlight: Promise<TokenPair> | null = null;
+
+async function refreshStoredTokens(): Promise<TokenPair> {
+  const { refreshToken } = getStoredTokens();
+  if (!refreshToken) {
+    throw new ApiError(401, 'Not authenticated');
+  }
+
+  if (!refreshInFlight) {
+    refreshInFlight = refreshTokens(refreshToken)
+      .then((tokens) => {
+        storeTokens(tokens);
+        return tokens;
+      })
+      .finally(() => {
+        refreshInFlight = null;
+      });
+  }
+
+  return refreshInFlight;
+}
+
+/** Authenticated request — refreshes access token once on 401, then retries. */
+async function requestWithAuth<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const { accessToken, refreshToken } = getStoredTokens();
+  if (!accessToken) {
+    throw new ApiError(401, 'Not authenticated');
+  }
+
+  try {
+    return await request<T>(path, options, accessToken);
+  } catch (err) {
+    if (!(err instanceof ApiError) || err.status !== 401 || !refreshToken) {
+      throw err;
+    }
+    const tokens = await refreshStoredTokens();
+    return await request<T>(path, options, tokens.access_token);
+  }
+}
+
 export async function registerUser(payload: {
   username: string;
   email: string;
@@ -137,8 +180,8 @@ export async function logoutUser(refreshToken: string): Promise<void> {
   );
 }
 
-export async function fetchCurrentUser(accessToken: string): Promise<ApiUser> {
-  return request<ApiUser>('/users/me', {}, accessToken);
+export async function fetchCurrentUser(): Promise<ApiUser> {
+  return requestWithAuth<ApiUser>('/users/me');
 }
 
 export interface ApiUserPublic {
@@ -185,13 +228,13 @@ export async function fetchCommunities(): Promise<ApiCommunity[]> {
 
 export async function fetchCommunity(
   name: string,
-  accessToken?: string | null,
+  options: { authenticated?: boolean } = {},
 ): Promise<ApiCommunity> {
-  return request<ApiCommunity>(
-    `/communities/${encodeURIComponent(name)}`,
-    {},
-    accessToken,
-  );
+  const path = `/communities/${encodeURIComponent(name)}`;
+  if (options.authenticated) {
+    return requestWithAuth<ApiCommunity>(path);
+  }
+  return request<ApiCommunity>(path);
 }
 
 export async function fetchGlobalPosts(
@@ -222,58 +265,42 @@ export async function fetchPost(postId: string): Promise<ApiPostFeedItem> {
 }
 
 export async function fetchHomePosts(
-  accessToken: string,
   params: { limit?: number; offset?: number } = {},
 ): Promise<ApiPostFeedItem[]> {
   const search = new URLSearchParams();
   if (params.limit != null) search.set('limit', String(params.limit));
   if (params.offset != null) search.set('offset', String(params.offset));
   const qs = search.toString();
-  return request<ApiPostFeedItem[]>(
+  return requestWithAuth<ApiPostFeedItem[]>(
     `/posts/home${qs ? `?${qs}` : ''}`,
-    {},
-    accessToken,
   );
 }
 
-export async function fetchJoinedCommunities(
-  accessToken: string,
-): Promise<ApiCommunity[]> {
-  return request<ApiCommunity[]>('/communities/mine', {}, accessToken);
+export async function fetchJoinedCommunities(): Promise<ApiCommunity[]> {
+  return requestWithAuth<ApiCommunity[]>('/communities/mine');
 }
 
-export async function joinCommunity(
-  accessToken: string,
-  name: string,
-): Promise<ApiCommunity> {
-  return request<ApiCommunity>(
+export async function joinCommunity(name: string): Promise<ApiCommunity> {
+  return requestWithAuth<ApiCommunity>(
     `/communities/${encodeURIComponent(name)}/join`,
     { method: 'POST' },
-    accessToken,
   );
 }
 
-export async function leaveCommunity(
-  accessToken: string,
-  name: string,
-): Promise<ApiCommunity> {
-  return request<ApiCommunity>(
+export async function leaveCommunity(name: string): Promise<ApiCommunity> {
+  return requestWithAuth<ApiCommunity>(
     `/communities/${encodeURIComponent(name)}/join`,
     { method: 'DELETE' },
-    accessToken,
   );
 }
 
-export async function createCommunity(
-  accessToken: string,
-  payload: {
-    name: string;
-    display_name: string;
-    description?: string | null;
-  },
-): Promise<ApiCommunity> {
-  return request<ApiCommunity>('/communities', {
+export async function createCommunity(payload: {
+  name: string;
+  display_name: string;
+  description?: string | null;
+}): Promise<ApiCommunity> {
+  return requestWithAuth<ApiCommunity>('/communities', {
     method: 'POST',
     body: JSON.stringify(payload),
-  }, accessToken);
+  });
 }

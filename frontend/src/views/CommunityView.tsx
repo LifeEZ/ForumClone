@@ -189,6 +189,7 @@ export function CommunityView({ name }: { name: string }) {
               <PostCard
                 post={post}
                 community={community}
+                showCommunity={false}
                 onVote={(vote) => handleVote(post.id, vote)}
               />
             </motion.div>

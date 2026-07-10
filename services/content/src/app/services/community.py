@@ -66,12 +66,6 @@ async def create_community(
     *,
     creator_id: str,
 ) -> Community:
-    """Insert a community and its creator membership in one unit of work.
-
-    The creator is auto-joined with role='creator'. Raises
-    `CommunityAlreadyExistsError` on a unique-name violation so the endpoint can
-    map it to 409 without leaking IntegrityError upward.
-    """
     community = Community(
         id=str(uuid4()),
         name=data.name,

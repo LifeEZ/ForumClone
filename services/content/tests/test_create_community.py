@@ -51,8 +51,6 @@ async def test_creator_auto_joined_with_creator_role(
     names = [c["name"] for c in mine.json()]
     assert "films" in names
 
-    # The creator's membership carries the creator role (not exposed on the
-    # public API, so observe it directly on the membership row).
     membership = await session.scalar(
         select(CommunityMembership).where(
             CommunityMembership.user_id == "u-test",
@@ -106,30 +104,31 @@ async def test_create_community_is_atomic_on_duplicate(
     )
     assert resp.status_code == 409
 
-    # Neither a membership nor a community row for the failed creator survives.
     memberships = (
-        await session.execute(
-            select(CommunityMembership).where(CommunityMembership.user_id == "u-test2")
+        (
+            await session.execute(
+                select(CommunityMembership).where(CommunityMembership.user_id == "u-test2")
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert len(memberships) == 0
 
-    orphaned = await session.scalar(
-        select(Community).where(Community.creator_id == "u-test2")
-    )
+    orphaned = await session.scalar(select(Community).where(Community.creator_id == "u-test2"))
     assert orphaned is None
 
 
 @pytest.mark.parametrize(
     "name",
     [
-        "Films",        # uppercase
-        "web_dev",      # disallowed character (underscore)
-        "ab",           # too short
-        "a" * 31,       # too long
-        "-films",       # leading hyphen
-        "films-",       # trailing hyphen
-        "mine",         # reserved slug
+        "Films",  # uppercase
+        "web_dev",  # disallowed character (underscore)
+        "ab",  # too short
+        "a" * 31,  # too long
+        "-films",  # leading hyphen
+        "films-",  # trailing hyphen
+        "mine",  # reserved slug
     ],
 )
 async def test_create_community_invalid_name_returns_422(

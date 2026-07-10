@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { ApiError, createCommunity, getStoredTokens } from '@/lib/api';
+import { ApiError, createCommunity } from '@/lib/api';
 import { validateCommunityName } from '@/lib/communityName';
 import { useAuth } from '@/context/AuthContext';
 
@@ -56,15 +56,9 @@ export function CreateCommunityView() {
       return;
     }
 
-    const { accessToken } = getStoredTokens();
-    if (!accessToken) {
-      setFormError('Your session has expired. Please log in again.');
-      return;
-    }
-
     setIsSubmitting(true);
     try {
-      await createCommunity(accessToken, {
+      await createCommunity({
         name,
         display_name: displayName.trim(),
         description: description.trim() || null,
@@ -76,6 +70,8 @@ export function CreateCommunityView() {
         setNameError('That name is already taken.');
       } else if (err instanceof ApiError && err.status === 422) {
         setNameError(err.message || 'Invalid name.');
+      } else if (err instanceof ApiError && err.status === 401) {
+        setFormError('Your session has expired. Please log in again.');
       } else if (err instanceof ApiError) {
         setFormError(err.message);
       } else {
@@ -91,12 +87,9 @@ export function CreateCommunityView() {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <h1 className="font-display text-2xl font-semibold text-forest-text mb-2">
+      <h1 className="font-display text-2xl font-semibold text-forest-text mb-6">
         Create a community
       </h1>
-      <p className="text-forest-muted mb-6">
-        Pick a URL name — it lives at /c/your-name and can&apos;t be changed.
-      </p>
 
       <form
         onSubmit={handleSubmit}
@@ -109,18 +102,20 @@ export function CreateCommunityView() {
           >
             Name
           </label>
-          <div className="flex items-center gap-2">
-            <span className="text-forest-muted text-sm">/c/</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="shrink-0 whitespace-nowrap text-forest-muted text-sm">
+              /c/
+            </span>
             <input
               id="name"
               type="text"
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
-              placeholder="films"
+              placeholder="community-name"
               required
               minLength={3}
               maxLength={30}
-              className={inputClass}
+              className={`${inputClass} flex-1 min-w-0`}
               aria-invalid={nameError !== null}
             />
           </div>
@@ -145,7 +140,7 @@ export function CreateCommunityView() {
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Films"
+            placeholder="Community title"
             required
             maxLength={100}
             className={inputClass}

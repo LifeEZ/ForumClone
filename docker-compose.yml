@@ -40,7 +40,9 @@ services:
       - "6379:6379"
 
   identity:
-    build: ./services/identity
+    build:
+      context: .
+      dockerfile: services/identity/Dockerfile
     restart: unless-stopped
     depends_on:
       identity_db:
@@ -52,7 +54,9 @@ services:
       - "8001:8001"
 
   content:
-    build: ./services/content
+    build:
+      context: .
+      dockerfile: services/content/Dockerfile
     restart: unless-stopped
     depends_on:
       content_db:
@@ -67,7 +71,9 @@ services:
       - "8002:8002"
 
   gateway:
-    build: ./services/gateway
+    build:
+      context: .
+      dockerfile: services/gateway/Dockerfile
     restart: unless-stopped
     depends_on:
       identity:
