@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 type LoadState =
   | { status: 'loading' }
   | { status: 'not_found' }
+  | { status: 'error'; message: string }
   | { status: 'ready'; community: ApiCommunity };
 
 export function SubmitPostView({ name }: { name: string }) {
@@ -24,11 +25,15 @@ export function SubmitPostView({ name }: { name: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
+
     let cancelled = false;
 
     async function loadCommunity() {
       try {
-        const community = await fetchCommunity(name, { authenticated: true });
+        const community = await fetchCommunity(name, {
+          authenticated: !!user,
+        });
         if (!cancelled) {
           setCommunityState({ status: 'ready', community });
         }
@@ -37,10 +42,13 @@ export function SubmitPostView({ name }: { name: string }) {
         if (err instanceof ApiError && err.status === 404) {
           setCommunityState({ status: 'not_found' });
         } else {
-          setFormError(
-            err instanceof ApiError ? err.message : 'Could not load community.',
-          );
-          setCommunityState({ status: 'not_found' });
+          setCommunityState({
+            status: 'error',
+            message:
+              err instanceof ApiError
+                ? err.message
+                : 'Could not load community.',
+          });
         }
       }
     }
@@ -49,7 +57,7 @@ export function SubmitPostView({ name }: { name: string }) {
     return () => {
       cancelled = true;
     };
-  }, [name]);
+  }, [name, user, authLoading]);
 
   if (communityState.status === 'loading' || authLoading) {
     return (
@@ -63,6 +71,17 @@ export function SubmitPostView({ name }: { name: string }) {
         <h2 className="text-2xl font-bold text-forest-text">
           Community not found
         </h2>
+      </div>
+    );
+  }
+
+  if (communityState.status === 'error') {
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-2xl font-bold text-forest-text mb-2">
+          Could not load community
+        </h2>
+        <p className="text-forest-muted">{communityState.message}</p>
       </div>
     );
   }
@@ -88,7 +107,7 @@ export function SubmitPostView({ name }: { name: string }) {
           <button
             type="button"
             onClick={() => router.push(`/c/${community.name}`)}
-            className="px-6 py-2 rounded-xl font-semibold text-forest-text hover:bg-forest-bg transition-colors"
+            className="px-6 py-2 rounded-xl font-semibold border border-forest-border/70 bg-forest-bg text-forest-muted hover:bg-forest-surface hover:text-forest-text transition-colors"
           >
             Back to c/{community.name}
           </button>

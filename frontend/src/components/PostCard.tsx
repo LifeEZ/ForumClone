@@ -50,7 +50,7 @@ export function PostCard({
   return (
     <Wrapper
       onClick={handleCardClick}
-      className={`bg-forest-surface/90 border-forest-border rounded-2xl p-4 sm:p-5 ${
+      className={`min-w-0 bg-forest-surface/90 border-forest-border rounded-2xl p-4 sm:p-5 ${
         !isDetail
           ? 'border border-forest-border/50 hover:border-forest-muted/25 hover:shadow-lg hover:shadow-black/10 transition-all cursor-pointer'
           : 'shadow-md shadow-black/10'
@@ -85,11 +85,11 @@ export function PostCard({
         </span>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-4 min-w-0">
         <h2
           className={`${
             isDetail ? 'text-2xl font-bold mb-4' : 'text-lg font-semibold mb-2'
-          } text-forest-text`}
+          } text-forest-text break-words`}
         >
           {post.title}
         </h2>

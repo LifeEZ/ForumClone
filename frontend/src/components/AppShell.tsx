@@ -18,7 +18,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <LeftSidebar />
 
         <main className="flex-1 min-w-0 flex justify-center">
-        <div className="w-full max-w-2xl px-0 sm:px-4 py-4 sm:py-6 lg:py-8">
+        <div className="w-full min-w-0 max-w-2xl px-0 sm:px-4 py-4 sm:py-6 lg:py-8">
           {children}
         </div>
       </main>
