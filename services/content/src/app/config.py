@@ -10,9 +10,12 @@ def _to_asyncpg(url: str) -> str:
     url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
     parts = urlsplit(url)
     query = dict(parse_qsl(parts.query)) if parts.query else {}
+    clean: dict[str, str] = {}
     if "sslmode" in query:
-        query["ssl"] = query.pop("sslmode")
-    return urlunsplit(parts._replace(query=urlencode(query)))
+        clean["ssl"] = query["sslmode"]
+    elif "ssl" in query:
+        clean["ssl"] = query["ssl"]
+    return urlunsplit(parts._replace(query=urlencode(clean)))
 
 
 class Settings(BaseSettings):
