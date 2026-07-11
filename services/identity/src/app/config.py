@@ -1,11 +1,18 @@
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def _to_asyncpg(url: str) -> str:
-    if url.startswith("postgresql://"):
-        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
-    return url
+    if not url.startswith("postgresql://"):
+        return url
+    url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    parts = urlsplit(url)
+    query = dict(parse_qsl(parts.query)) if parts.query else {}
+    if "sslmode" in query:
+        query["ssl"] = query.pop("sslmode")
+    return urlunsplit(parts._replace(query=urlencode(query)))
 
 
 class Settings(BaseSettings):
