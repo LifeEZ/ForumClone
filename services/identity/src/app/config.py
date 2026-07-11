@@ -1,4 +1,11 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _to_asyncpg(url: str) -> str:
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
 
 
 class Settings(BaseSettings):
@@ -10,6 +17,11 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/identity_db"
     test_database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5433/identity_test"
+
+    @field_validator("database_url", "test_database_url", mode="before")
+    @classmethod
+    def _coerce_asyncpg(cls, v: str) -> str:
+        return _to_asyncpg(v)
 
     # RS256 keypair (PEM). Leave blank in local dev to auto-generate an ephemeral pair.
     jwt_private_key_pem: str = ""
