@@ -27,7 +27,11 @@ _HOP_BY_HOP = {
     "upgrade",
     "host",
     "content-length",
+    "content-encoding",
 }
+
+
+_STRIP_FROM_REQUEST = _HOP_BY_HOP | {"accept-encoding"}
 
 
 @asynccontextmanager
@@ -108,7 +112,9 @@ def create_app() -> FastAPI:
 
         url = f"{base}/api/v1/{path}"
         body = await request.body()
-        forward_headers = {k: v for k, v in request.headers.items() if k.lower() not in _HOP_BY_HOP}
+        forward_headers = {
+            k: v for k, v in request.headers.items() if k.lower() not in _STRIP_FROM_REQUEST
+        }
 
         client: httpx.AsyncClient = request.app.state.client
         upstream = await client.request(
