@@ -16,6 +16,10 @@ export function communityMembership(qc: QueryClient, name: string): void {
   void qc.invalidateQueries({ queryKey: queryKeys.home });
 }
 
+export function loggedIn(qc: QueryClient): void {
+  void qc.invalidateQueries({ queryKey: queryKeys.me });
+}
+
 export function postVote(qc: QueryClient, postId: string): void {
   void qc.invalidateQueries({ queryKey: queryKeys.post(postId) });
   void qc.invalidateQueries({ queryKey: queryKeys.home });

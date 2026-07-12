@@ -4,6 +4,7 @@ import {
   commentCreated,
   communityCreated,
   communityMembership,
+  loggedIn,
   postCreated,
   postVote,
   queryKeys,
@@ -57,6 +58,13 @@ describe('invalidation helpers', () => {
     const s = spy(qc);
     communityCreated(qc);
     expect(keys(s)).toEqual([['communities']]);
+  });
+
+  it('loggedIn invalidates the me query', () => {
+    const qc = new QueryClient();
+    const s = spy(qc);
+    loggedIn(qc);
+    expect(keys(s)).toEqual([['me']]);
   });
 
   it('postCreated invalidates community posts and home', () => {

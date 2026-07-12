@@ -13,15 +13,17 @@ import { makeQueryClient } from '@/lib/queryClient';
 export function QueryClientProvider({ children }: { children: ReactNode }) {
   const { logout } = useAuth();
   const [client] = useState(() => {
+    let qc: ReturnType<typeof makeQueryClient>;
     const onSessionExpired = (error: unknown) => {
       if (error instanceof SessionExpiredError) {
         void logout();
         qc.clear();
       }
     };
-    const queryCache = new QueryCache({ onError: onSessionExpired });
-    const mutationCache = new MutationCache({ onError: onSessionExpired });
-    const qc = makeQueryClient({ queryCache, mutationCache });
+    qc = makeQueryClient({
+      queryCache: new QueryCache({ onError: onSessionExpired }),
+      mutationCache: new MutationCache({ onError: onSessionExpired }),
+    });
     return qc;
   });
 

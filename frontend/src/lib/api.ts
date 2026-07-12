@@ -272,7 +272,7 @@ export async function fetchGlobalPosts(
 
 export async function fetchCommunityPosts(
   name: string,
-  params: { limit?: number; offset?: number } = {},
+  params: { limit?: number; offset?: number; signal?: AbortSignal } = {},
 ): Promise<ApiPostFeedItem[]> {
   const search = new URLSearchParams();
   if (params.limit != null) search.set('limit', String(params.limit));
@@ -280,6 +280,8 @@ export async function fetchCommunityPosts(
   const qs = search.toString();
   return requestWithOptionalAuth<ApiPostFeedItem[]>(
     `/communities/${encodeURIComponent(name)}/posts${qs ? `?${qs}` : ''}`,
+    {},
+    params.signal,
   );
 }
 

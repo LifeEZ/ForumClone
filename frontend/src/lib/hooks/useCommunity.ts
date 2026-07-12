@@ -25,8 +25,8 @@ export function useCommunity(
 export function useCommunityPosts(name: string) {
   return useQuery<Post[]>({
     queryKey: queryKeys.communityPosts(name),
-    queryFn: async () => {
-      const data = await fetchCommunityPosts(name);
+    queryFn: async ({ signal }) => {
+      const data = await fetchCommunityPosts(name, { signal });
       return data.map(mapApiPost);
     },
     enabled: !!name,

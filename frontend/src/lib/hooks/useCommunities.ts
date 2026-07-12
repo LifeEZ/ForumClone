@@ -1,5 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchCommunities, fetchJoinedCommunities } from '@/lib/api';
+import {
+  fetchCommunities,
+  fetchJoinedCommunities,
+  SessionExpiredError,
+} from '@/lib/api';
 import { queryKeys } from '@/lib/invalidations';
 import { mapApiCommunity } from '@/lib/mappers';
 import { TokenService } from '@/lib/tokenService';
@@ -15,7 +19,9 @@ export function useCommunities() {
         try {
           const joined = await fetchJoinedCommunities(signal);
           joinedIds = new Set(joined.map((c) => c.id));
-        } catch {
+        } catch (err) {
+          // Terminal session expiry must reach the global error handler.
+          if (err instanceof SessionExpiredError) throw err;
           joinedIds = new Set();
         }
       }

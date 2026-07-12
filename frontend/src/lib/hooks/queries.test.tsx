@@ -99,6 +99,28 @@ describe('useCommunities', () => {
     expect(result.current.data![0].isJoined).toBe(false);
     expect(mineCalls).toBe(0);
   });
+
+  it('errors when the joined fetch fails with SessionExpiredError', async () => {
+    server.use(
+      http.get(`${BASE}/api/v1/communities`, () =>
+        HttpResponse.json([community()]),
+      ),
+      http.get(`${BASE}/api/v1/communities/mine`, () =>
+        HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 }),
+      ),
+      http.post(`${BASE}/api/v1/auth/refresh`, () =>
+        HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 }),
+      ),
+    );
+    TokenService.set({
+      access_token: 'expired',
+      refresh_token: 'r',
+      token_type: 'bearer',
+    });
+
+    const { result } = renderHookWithQueryClient(() => useCommunities());
+    await waitFor(() => expect(result.current.isError).toBe(true));
+  });
 });
 
 describe('useCommunity', () => {

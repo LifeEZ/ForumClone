@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { loginUser, logoutUser, registerUser } from '@/lib/api';
-import { queryKeys } from '@/lib/invalidations';
+import { loggedIn } from '@/lib/invalidations';
 import { TokenService } from '@/lib/tokenService';
 
 export function useLogin() {
@@ -10,7 +10,7 @@ export function useLogin() {
       loginUser(payload),
     onSuccess: (tokens) => {
       TokenService.set(tokens);
-      void qc.invalidateQueries({ queryKey: queryKeys.me });
+      loggedIn(qc);
     },
   });
 }
@@ -25,7 +25,7 @@ export function useRegister() {
     }) => registerUser(payload),
     onSuccess: (tokens) => {
       TokenService.set(tokens);
-      void qc.invalidateQueries({ queryKey: queryKeys.me });
+      loggedIn(qc);
     },
   });
 }
