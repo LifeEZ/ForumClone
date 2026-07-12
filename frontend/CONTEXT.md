@@ -4,36 +4,28 @@ Supplement to the shared glossary in [`CONTEXT.md`](../CONTEXT.md).
 
 ## Data-fetching pattern
 
-Page views follow an **API-first** pattern (established in slice 4):
+Page views follow an **API-first** pattern (established in slice 4, cache moved to React Query per ADR-0005):
 
 | Concern | Source |
 |---------|--------|
-| Auth session | `useAuth()` from `AuthContext` |
-| HTTP | `lib/api.ts` |
+| Auth session | `useAuth()` from `AuthContext` (thin wrapper over `useQuery(['me'])`) |
+| HTTP transport (token refresh on 401, error mapping) | `lib/api.ts` |
+| Client-side cache, loading/errors, invalidation, refetch, transient retry (429/5xx) | React Query via hooks in `lib/hooks/` |
+| Token storage | `lib/tokenService.ts` singleton |
 | API → UI types | `lib/mappers.ts` |
-| Loading / errors | Local `useState` in the view |
 
-`CreateCommunityView`, `CommunityView`, `HomeView`, and `PostDetailView` load their own data this way.
+`CreateCommunityView`, `CommunityView`, `HomeView`, `PostDetailView`, and `SubmitPostView` each call a hook from `lib/hooks/` rather than touching `api.ts` directly. The shell components (`Navbar`, `LeftSidebar`, `RightSidebar`, `CommunitiesStrip`) likewise call hooks; there is no separate shell cache layer. See ADR-0005 for the transport-owns-success / RQ-owns-recency split.
 
-## AppContext (shell only)
+## Token layer
 
-`AppContext` is **not** the default data layer. It remains for:
+**Access Token**:
+Short-lived credential attached to each authenticated HTTP request. Held in `TokenService`; read by `api.ts` on every request; set by `AuthContext` after login/register.
+_Avoid_: bearer, JWT (implementation detail)
 
-- **Shell chrome** — `Navbar`, `LeftSidebar`, `RightSidebar`, `CommunitiesStrip` share a communities cache and join toggles from the sidebar.
+**Refresh Token**:
+Long-lived credential used only inside `api.ts` to mint a new Access Token after a 401. Held in `TokenService`; read by `api.ts` only during 401 recovery.
+_Avoid_: session token, refresh credential
 
-Page views should not read communities or membership from `AppContext` when they can call `api.ts` directly. After a page-level join/leave, call `refreshCommunities()` so shell chrome stays in sync.
-
-## Slice cleanup status
-
-Slices 5–7 wired comments, post creation, and votes through `api.ts`; the per-view
-state lives in the views themselves (`PostDetailView`, `SubmitPostView`, `VoteControl`).
-`mockComments`, the `addPost` stub, and the `votePost` stub were removed from
-`AppContext` as part of slice 8 polish — `AppContext` now exposes only communities
-cache + join toggles.
-
-| Area | Slice | Status |
-|------|------|--------|
-| Comments | 6 | ✅ `PostDetailView` / `CommentThread` fetch + create via `api.ts`; `mockComments` removed |
-| Create post | 5 | ✅ `SubmitPostView` uses `api.ts`; `addPost` stub removed |
-| Votes | 7 | ✅ `VoteControl` calls `api.castVote`; `votePost` stub removed |
-| AppContext shape | After 5–7 | ✅ Shell-only (communities cache + `toggleJoinCommunity`); no data stubs remain |
+**SessionExpiredError**:
+Thrown by `api.ts` when an Access Token refresh attempt itself fails with 401. Treated as terminal by the frontend: the global React Query error handler calls `AuthContext.logout()` and clears the query cache. Distinct from `ApiError` (status 401), which fires per-request and is eligible for refresh.
+_Avoid_: auth error, unauthorised (too generic)
