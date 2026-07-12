@@ -1,3 +1,5 @@
+import { TokenService } from '@/lib/tokenService';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
 export interface ApiUser {
@@ -35,36 +37,11 @@ export class SessionExpiredError extends Error {
   }
 }
 
-const ACCESS_TOKEN_KEY = 'hiver_access_token';
-const REFRESH_TOKEN_KEY = 'hiver_refresh_token';
-
-export function getStoredTokens(): {
-  accessToken: string | null;
-  refreshToken: string | null;
-} {
-  if (typeof window === 'undefined') {
-    return { accessToken: null, refreshToken: null };
-  }
-  return {
-    accessToken: localStorage.getItem(ACCESS_TOKEN_KEY),
-    refreshToken: localStorage.getItem(REFRESH_TOKEN_KEY),
-  };
-}
-
-export function storeTokens(tokens: TokenPair): void {
-  localStorage.setItem(ACCESS_TOKEN_KEY, tokens.access_token);
-  localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token);
-}
-
-export function clearStoredTokens(): void {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
-}
-
 async function parseError(resp: Response): Promise<string> {
   try {
-    const data = (await resp.json()) as
-      | { detail?: string | Array<{ msg?: string; message?: string }> };
+    const data = (await resp.json()) as {
+      detail?: string | Array<{ msg?: string; message?: string }>;
+    };
     if (typeof data.detail === 'string') return data.detail;
     if (Array.isArray(data.detail) && data.detail.length > 0) {
       const first = data.detail[0];
@@ -74,34 +51,6 @@ async function parseError(resp: Response): Promise<string> {
     // ignore parse errors
   }
   return resp.statusText || 'Request failed';
-}
-
-const MAX_RETRIES = 3;
-const BASE_BACKOFF_MS = 500;
-
-function backoffDelay(attempt: number, retryAfter: string | null): number {
-  if (retryAfter) {
-    const seconds = parseInt(retryAfter, 10);
-    if (!Number.isNaN(seconds) && seconds > 0) return seconds * 1000;
-  }
-  return BASE_BACKOFF_MS * 2 ** attempt;
-}
-
-async function fetchWithRetry(
-  input: string,
-  init: RequestInit,
-): Promise<Response> {
-  for (let attempt = 0; ; attempt++) {
-    const resp = await fetch(input, init);
-    if (resp.status === 429 || resp.status >= 500) {
-      if (attempt < MAX_RETRIES) {
-        const delay = backoffDelay(attempt, resp.headers.get('retry-after'));
-        await new Promise((r) => setTimeout(r, delay));
-        continue;
-      }
-    }
-    return resp;
-  }
 }
 
 function isAbortError(err: unknown): boolean {
@@ -122,7 +71,7 @@ async function request<T>(
     headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
-  const resp = await fetchWithRetry(`${API_BASE}/api/v1${path}`, {
+  const resp = await fetch(`${API_BASE}/api/v1${path}`, {
     ...options,
     headers,
     cache: 'no-store',
@@ -143,7 +92,7 @@ async function request<T>(
 let refreshInFlight: Promise<TokenPair> | null = null;
 
 async function refreshStoredTokens(): Promise<TokenPair> {
-  const { refreshToken } = getStoredTokens();
+  const refreshToken = TokenService.getRefreshToken();
   if (!refreshToken) {
     throw new ApiError(401, 'Not authenticated');
   }
@@ -151,7 +100,7 @@ async function refreshStoredTokens(): Promise<TokenPair> {
   if (!refreshInFlight) {
     refreshInFlight = refreshTokens(refreshToken)
       .then((tokens) => {
-        storeTokens(tokens);
+        TokenService.set(tokens);
         return tokens;
       })
       .finally(() => {
@@ -167,7 +116,8 @@ async function requestWithAuth<T>(
   options: RequestInit = {},
   signal?: AbortSignal,
 ): Promise<T> {
-  const { accessToken, refreshToken } = getStoredTokens();
+  const accessToken = TokenService.getAccessToken();
+  const refreshToken = TokenService.getRefreshToken();
   if (!accessToken) {
     throw new SessionExpiredError();
   }
@@ -196,7 +146,7 @@ async function requestWithOptionalAuth<T>(
   options: RequestInit = {},
   signal?: AbortSignal,
 ): Promise<T> {
-  const { accessToken } = getStoredTokens();
+  const accessToken = TokenService.getAccessToken();
   try {
     return await request<T>(path, options, accessToken ?? undefined, signal);
   } catch (err) {
@@ -289,7 +239,9 @@ export interface ApiPostFeedItem {
   is_deleted: boolean;
 }
 
-export async function fetchCommunities(signal?: AbortSignal): Promise<ApiCommunity[]> {
+export async function fetchCommunities(
+  signal?: AbortSignal,
+): Promise<ApiCommunity[]> {
   return request<ApiCommunity[]>('/communities', {}, undefined, signal);
 }
 
@@ -331,7 +283,10 @@ export async function fetchCommunityPosts(
   );
 }
 
-export async function fetchPost(postId: string, signal?: AbortSignal): Promise<ApiPostFeedItem> {
+export async function fetchPost(
+  postId: string,
+  signal?: AbortSignal,
+): Promise<ApiPostFeedItem> {
   return requestWithOptionalAuth<ApiPostFeedItem>(
     `/posts/${encodeURIComponent(postId)}`,
     {},
@@ -353,7 +308,9 @@ export async function fetchHomePosts(
   );
 }
 
-export async function fetchJoinedCommunities(signal?: AbortSignal): Promise<ApiCommunity[]> {
+export async function fetchJoinedCommunities(
+  signal?: AbortSignal,
+): Promise<ApiCommunity[]> {
   return requestWithAuth<ApiCommunity[]>('/communities/mine', {}, signal);
 }
 
@@ -409,7 +366,10 @@ export interface ApiComment {
   replies: ApiComment[];
 }
 
-export async function fetchComments(postId: string, signal?: AbortSignal): Promise<ApiComment[]> {
+export async function fetchComments(
+  postId: string,
+  signal?: AbortSignal,
+): Promise<ApiComment[]> {
   return requestWithOptionalAuth<ApiComment[]>(
     `/posts/${encodeURIComponent(postId)}/comments`,
     {},

@@ -14,8 +14,8 @@ import {
   castVote,
   fetchGlobalPosts,
   fetchHomePosts,
-  getStoredTokens,
 } from '@/lib/api';
+import { TokenService } from '@/lib/tokenService';
 import { mapApiPost, updatePostVote } from '@/lib/mappers';
 import { Post } from '@/types';
 
@@ -40,15 +40,21 @@ export function HomeView() {
 
       try {
         if (user) {
-          const { accessToken } = getStoredTokens();
+          const accessToken = TokenService.getAccessToken();
           if (!accessToken) {
-            const data = await fetchGlobalPosts({ limit: 20, signal: controller.signal });
+            const data = await fetchGlobalPosts({
+              limit: 20,
+              signal: controller.signal,
+            });
             if (controller.signal.aborted) return;
             setPosts(data.map(mapApiPost));
             return;
           }
 
-          const homeData = await fetchHomePosts({ limit: 20, signal: controller.signal });
+          const homeData = await fetchHomePosts({
+            limit: 20,
+            signal: controller.signal,
+          });
           if (controller.signal.aborted) return;
 
           if (homeData.length > 0) {
@@ -57,7 +63,10 @@ export function HomeView() {
           }
 
           if (joinedCount === 0) {
-            const globalData = await fetchGlobalPosts({ limit: 20, signal: controller.signal });
+            const globalData = await fetchGlobalPosts({
+              limit: 20,
+              signal: controller.signal,
+            });
             if (controller.signal.aborted) return;
             setPosts(globalData.map(mapApiPost));
             setShowPersonalizationBanner(true);
@@ -65,7 +74,10 @@ export function HomeView() {
             setPosts([]);
           }
         } else {
-          const data = await fetchGlobalPosts({ limit: 20, signal: controller.signal });
+          const data = await fetchGlobalPosts({
+            limit: 20,
+            signal: controller.signal,
+          });
           if (controller.signal.aborted) return;
           setPosts(data.map(mapApiPost));
         }

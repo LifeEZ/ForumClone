@@ -12,14 +12,12 @@ import {
   ApiError,
   ApiUser,
   SessionExpiredError,
-  clearStoredTokens,
   fetchCurrentUser,
-  getStoredTokens,
   loginUser,
   logoutUser,
   registerUser,
-  storeTokens,
 } from '@/lib/api';
+import { TokenService } from '@/lib/tokenService';
 
 interface AuthContextType {
   user: ApiUser | null;
@@ -36,7 +34,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 async function loadUserFromStorage(): Promise<ApiUser | null> {
-  const { accessToken } = getStoredTokens();
+  const accessToken = TokenService.getAccessToken();
   if (!accessToken) return null;
 
   const MAX_ATTEMPTS = 5;
@@ -47,7 +45,7 @@ async function loadUserFromStorage(): Promise<ApiUser | null> {
       return await fetchCurrentUser();
     } catch (err) {
       if (err instanceof SessionExpiredError) {
-        clearStoredTokens();
+        TokenService.clear();
         return null;
       }
       const isTransient =
@@ -80,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (username: string, password: string) => {
     const tokens = await loginUser({ username, password });
-    storeTokens(tokens);
+    TokenService.set(tokens);
     const me = await fetchCurrentUser();
     setUser(me);
   }, []);
@@ -88,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(
     async (username: string, email: string, password: string) => {
       const tokens = await registerUser({ username, email, password });
-      storeTokens(tokens);
+      TokenService.set(tokens);
       const me = await fetchCurrentUser();
       setUser(me);
     },
@@ -96,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    const { refreshToken } = getStoredTokens();
+    const refreshToken = TokenService.getRefreshToken();
     if (refreshToken) {
       try {
         await logoutUser(refreshToken);
@@ -104,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Revocation is best-effort once tokens are cleared locally.
       }
     }
-    clearStoredTokens();
+    TokenService.clear();
     setUser(null);
   }, []);
 

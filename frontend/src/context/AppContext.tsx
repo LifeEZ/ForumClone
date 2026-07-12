@@ -15,10 +15,10 @@ import {
   fetchCommunities,
   fetchCommunity,
   fetchJoinedCommunities,
-  getStoredTokens,
   joinCommunity,
   leaveCommunity,
 } from '@/lib/api';
+import { TokenService } from '@/lib/tokenService';
 import { mapApiCommunity, mapAuthUser } from '@/lib/mappers';
 
 interface AppContextType {
@@ -44,44 +44,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joinedCount, setJoinedCount] = useState(0);
 
-  const loadCommunities = useCallback(async (signal?: AbortSignal) => {
-    setCommunitiesLoading(true);
-    setCommunitiesError(null);
-    try {
-      const data = await fetchCommunities(signal);
+  const loadCommunities = useCallback(
+    async (signal?: AbortSignal) => {
+      setCommunitiesLoading(true);
+      setCommunitiesError(null);
+      try {
+        const data = await fetchCommunities(signal);
 
-      let joinedIds = new Set<string>();
-      if (authUser) {
-        const { accessToken } = getStoredTokens();
-        if (accessToken) {
-          try {
-            const joined = await fetchJoinedCommunities(signal);
-            joinedIds = new Set(joined.map((j) => j.id));
-            setJoinedCount(joined.length);
-          } catch {
+        let joinedIds = new Set<string>();
+        if (authUser) {
+          const accessToken = TokenService.getAccessToken();
+          if (accessToken) {
+            try {
+              const joined = await fetchJoinedCommunities(signal);
+              joinedIds = new Set(joined.map((j) => j.id));
+              setJoinedCount(joined.length);
+            } catch {
+              setJoinedCount(0);
+            }
+          } else {
             setJoinedCount(0);
           }
         } else {
           setJoinedCount(0);
         }
-      } else {
-        setJoinedCount(0);
-      }
 
-      if (signal?.aborted) return;
-      setCommunities(
-        data.map((c) => mapApiCommunity(c, joinedIds.has(c.id))),
-      );
-    } catch (err) {
-      if (signal?.aborted) return;
-      if (err instanceof DOMException && err.name === 'AbortError') return;
-      const message =
-        err instanceof ApiError ? err.message : 'Could not load communities';
-      setCommunitiesError(message);
-    } finally {
-      if (!signal?.aborted) setCommunitiesLoading(false);
-    }
-  }, [authUser]);
+        if (signal?.aborted) return;
+        setCommunities(
+          data.map((c) => mapApiCommunity(c, joinedIds.has(c.id))),
+        );
+      } catch (err) {
+        if (signal?.aborted) return;
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        const message =
+          err instanceof ApiError ? err.message : 'Could not load communities';
+        setCommunitiesError(message);
+      } finally {
+        if (!signal?.aborted) setCommunitiesLoading(false);
+      }
+    },
+    [authUser],
+  );
 
   const refreshCommunities = useCallback(async () => {
     await loadCommunities();
@@ -106,7 +109,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const community = communities.find((c) => c.id === communityId);
     if (!community) return;
 
-    const { accessToken } = getStoredTokens();
+    const accessToken = TokenService.getAccessToken();
     if (!accessToken) return;
 
     const wasJoined = community.isJoined;
@@ -117,12 +120,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       prev.map((c) =>
         c.id === communityId
           ? {
-            ...c,
-            isJoined: !wasJoined,
-            memberCount: wasJoined
-              ? c.memberCount - 1
-              : c.memberCount + 1,
-          }
+              ...c,
+              isJoined: !wasJoined,
+              memberCount: wasJoined ? c.memberCount - 1 : c.memberCount + 1,
+            }
           : c,
       ),
     );
@@ -137,19 +138,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         authenticated: true,
       });
       setCommunities((prev) =>
-        prev.map((c) =>
-          c.id === communityId ? mapApiCommunity(updated) : c,
-        ),
+        prev.map((c) => (c.id === communityId ? mapApiCommunity(updated) : c)),
       );
     } catch (err) {
       setCommunities((prev) =>
         prev.map((c) =>
           c.id === communityId
             ? {
-              ...c,
-              isJoined: wasJoined,
-              memberCount: previousMemberCount,
-            }
+                ...c,
+                isJoined: wasJoined,
+                memberCount: previousMemberCount,
+              }
             : c,
         ),
       );
