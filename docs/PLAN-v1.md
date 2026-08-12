@@ -133,7 +133,7 @@ Each slice ships API + UI + tests before moving on. Slices 1-2 are complete as a
 | 6 | Comments + replies | Threads work (Content) | ✅ |
 | 7 | Votes + karma | Engagement works (score local to Content; karma → Identity via event) | ✅ |
 | 8 | CI, seed polish, README | Production-shaped (per-service CI matrix) | ✅ |
-| 9 | Deploy | Live URL | ⬜ |
+| 9 | Deploy | Live URL | ✅ |
 
 ## Frontend conventions
 
